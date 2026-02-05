@@ -49,7 +49,7 @@ func New(addr string) *http.Server {
 
 	userRepo := userstorage.NewUserRepository(firestoreClient.Client)
 	tokenRepo := userstorage.NewActivationTokenRepository(firestoreClient.Client)
-	authProvider := firebase.NewAuthProvider(firebaseClient)
+	authProvider := firebase.NewAuthProvider(firebaseClient, os.Getenv("FIREBASE_API_KEY"))
 	emailSender := &noopEmailSender{} // TODO: implement real email sender
 
 	userService := userservice.NewUserService(userRepo, tokenRepo, authProvider, emailSender)
@@ -93,6 +93,12 @@ func register(mux *http.ServeMux, deps Dependencies) {
 
 		// POST /users/activate - no auth required
 		NewRoute(mux, http.MethodPost, "/users/activate", userHandler.Activate)
+
+		// POST /users/login - no auth required
+		NewRoute(mux, http.MethodPost, "/users/login", userHandler.Login)
+
+		// POST /users/refresh - no auth required
+		NewRoute(mux, http.MethodPost, "/users/refresh", userHandler.RefreshToken)
 
 		// Protected routes - require active user
 		mux.Handle("GET /users/me", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(userHandler.GetProfile)))

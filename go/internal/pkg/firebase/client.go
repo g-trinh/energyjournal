@@ -1,10 +1,17 @@
 package firebase
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
 	"os"
+
+	"energyjournal/internal/domain/user"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
@@ -57,10 +64,11 @@ func (c *Client) CreateUser(ctx context.Context, email, password string) (*auth.
 // AuthProvider adapts Client to the user.AuthProvider interface.
 type AuthProvider struct {
 	client *Client
+	apiKey string
 }
 
-func NewAuthProvider(client *Client) *AuthProvider {
-	return &AuthProvider{client: client}
+func NewAuthProvider(client *Client, apiKey string) *AuthProvider {
+	return &AuthProvider{client: client, apiKey: apiKey}
 }
 
 func (p *AuthProvider) CreateUser(ctx context.Context, email, password string) (string, error) {
@@ -69,4 +77,107 @@ func (p *AuthProvider) CreateUser(ctx context.Context, email, password string) (
 		return "", err
 	}
 	return record.UID, nil
+}
+
+func (p *AuthProvider) Login(ctx context.Context, email, password string) (*user.AuthTokens, string, error) {
+	endpoint := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s", url.QueryEscape(p.apiKey))
+
+	body, err := json.Marshal(map[string]any{
+		"email":             email,
+		"password":          password,
+		"returnSecureToken": true,
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("marshal login request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, "", fmt.Errorf("create login request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("login request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errResp struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		return nil, "", fmt.Errorf("firebase login failed: %s", errResp.Error.Message)
+	}
+
+	var result struct {
+		IDToken      string `json:"idToken"`
+		RefreshToken string `json:"refreshToken"`
+		ExpiresIn    string `json:"expiresIn"`
+		LocalID      string `json:"localId"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, "", fmt.Errorf("decode login response: %w", err)
+	}
+
+	tokens := &user.AuthTokens{
+		IDToken:      result.IDToken,
+		RefreshToken: result.RefreshToken,
+		ExpiresIn:    result.ExpiresIn,
+	}
+	return tokens, result.LocalID, nil
+}
+
+func (p *AuthProvider) RefreshToken(ctx context.Context, refreshToken string) (*user.AuthTokens, string, error) {
+	endpoint := fmt.Sprintf("https://securetoken.googleapis.com/v1/token?key=%s", url.QueryEscape(p.apiKey))
+
+	body, err := json.Marshal(map[string]string{
+		"grant_type":    "refresh_token",
+		"refresh_token": refreshToken,
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("marshal refresh request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, "", fmt.Errorf("create refresh request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("refresh request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errResp struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		return nil, "", fmt.Errorf("firebase refresh failed: %s", errResp.Error.Message)
+	}
+
+	var result struct {
+		IDToken      string `json:"id_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    string `json:"expires_in"`
+		UserID       string `json:"user_id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, "", fmt.Errorf("decode refresh response: %w", err)
+	}
+
+	tokens := &user.AuthTokens{
+		IDToken:      result.IDToken,
+		RefreshToken: result.RefreshToken,
+		ExpiresIn:    result.ExpiresIn,
+	}
+	return tokens, result.UserID, nil
 }

@@ -155,6 +155,42 @@ func (s *userService) CleanupExpired(ctx context.Context) error {
 	return nil
 }
 
+func (s *userService) Login(ctx context.Context, email, password string) (*user.AuthTokens, error) {
+	tokens, uid, err := s.authProvider.Login(ctx, email, password)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := s.userRepo.GetByUID(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.Status != user.StatusActive {
+		return nil, pkgerror.NewInputValidationError("user", "user is not active")
+	}
+
+	return tokens, nil
+}
+
+func (s *userService) RefreshToken(ctx context.Context, refreshToken string) (*user.AuthTokens, error) {
+	tokens, uid, err := s.authProvider.RefreshToken(ctx, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := s.userRepo.GetByUID(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.Status != user.StatusActive {
+		return nil, pkgerror.NewInputValidationError("user", "user is not active")
+	}
+
+	return tokens, nil
+}
+
 func generateToken() (string, error) {
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {

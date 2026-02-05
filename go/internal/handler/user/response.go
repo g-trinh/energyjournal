@@ -16,6 +16,20 @@ type UserResponse struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type AuthTokensResponse struct {
+	IDToken      string `json:"idToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    string `json:"expiresIn"`
+}
+
+func NewAuthTokensResponse(t *user.AuthTokens) *AuthTokensResponse {
+	return &AuthTokensResponse{
+		IDToken:      t.IDToken,
+		RefreshToken: t.RefreshToken,
+		ExpiresIn:    t.ExpiresIn,
+	}
+}
+
 func NewUserResponse(u *user.User) *UserResponse {
 	return &UserResponse{
 		UID:       u.UID,

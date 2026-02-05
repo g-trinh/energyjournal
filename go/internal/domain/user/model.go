@@ -30,3 +30,9 @@ type ActivationToken struct {
 func (t *ActivationToken) IsExpired() bool {
 	return time.Now().After(t.ExpiresAt)
 }
+
+type AuthTokens struct {
+	IDToken      string
+	RefreshToken string
+	ExpiresIn    string
+}

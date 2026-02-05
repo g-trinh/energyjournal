@@ -9,10 +9,14 @@ type UserService interface {
 	Update(ctx context.Context, uid, firstname, lastname, timezone string) (*User, error)
 	Delete(ctx context.Context, uid string) error
 	CleanupExpired(ctx context.Context) error
+	Login(ctx context.Context, email, password string) (*AuthTokens, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*AuthTokens, error)
 }
 
 type AuthProvider interface {
 	CreateUser(ctx context.Context, email, password string) (uid string, err error)
+	Login(ctx context.Context, email, password string) (*AuthTokens, string, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*AuthTokens, string, error)
 }
 
 type EmailSender interface {
