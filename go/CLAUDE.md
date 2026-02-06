@@ -2,23 +2,6 @@
 
 This is a Go project following the standard Go project layout.
 
-## Directory Structure
-
-```
-go/
-├── cmd/                    # Entrypoints (main packages)
-│   ├── container/          # Docker container server (port 8888)
-│   └── lambda/             # AWS Lambda handler
-├── internal/               # Private application code
-│   ├── server/             # HTTP server, routing, CORS, error mapping
-│   ├── handler/            # HTTP endpoint handlers (by feature)
-│   ├── domain/             # Core domain models and interfaces
-│   ├── service/            # Business logic implementations
-│   ├── integration/        # External service adapters (Brevo, Amazon)
-│   └── pkg/                # Shared utilities (errors, DynamoDB, AI)
-└── docs/                   # Generated Swagger docs (swag init)
-```
-
 > Infrastructure (CDK) lives in a separate module at the project root.
 
 ## Key Conventions
