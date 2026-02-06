@@ -8,6 +8,8 @@
 
 # Open API specifications
 
+Use go/docs/swagger.json as the absolute reference for API specifications.
+
 Open API specifications are generated thanks to the Swagger annotations in http handlers.
 
 Everytime you create, delete or make changes to an API endpoint, review the Swagger annotations attached to it.
