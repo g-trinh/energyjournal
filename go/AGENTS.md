@@ -3,8 +3,8 @@
 - Go HTTP service with a small router dispatching to handlers via http.ServeMux.
 - Handlers validate JSON and call domain services; map domain errors to HTTP codes and simple JSON bodies.
 - Domain/service layer enforces basic group and gifters rules and delegates persistence.
-- Storage layer is abstracted; current backing is DynamoDB through AWS SDK v2.
-- Lightweight domain structs (group, participant, rule) with UUID IDs; helper packages for error types and a DynamoDB client builder
+- Storage layer is abstracted;
+- Lightweight domain structs (group, participant, rule) with UUID IDs; helper packages for error types
 
 # Open API specifications
 
@@ -29,41 +29,26 @@ Do not try to guess.
 
 This project follows Go's standard project layout conventions.
 
-## Directories
+## Directory Structure
 
-- `/cmd`: Application entrypoints (main packages)
-  - `/container`: Containerized server bootstrap
-  - `/lambda`: AWS Lambda handler entrypoint
-- `/internal`: Private application code (compiler-enforced privacy)
-  - `/server`: HTTP server setup, routing, error mapping
-  - `/handler`: HTTP handlers
-    - `/groups`: group/gifter API handlers
-  - `/domain`: Core domain models
-    - `/group`: Core group/gifter/gift domain models, rules, AI/notifier interfaces; DynamoDB storage interfaces; includes gift tests
-      - `/storage`: Domain Repository & Persistence interfaces
-    - `/notification`: Notification service interface
-  - `/integration`: External services adapters
-    - `/amazon`: Amazon gift integration
-    - `/brevo`: Brevo emailing adapter
-    - `/mailtrap`: Mailtrap emailing adapter
-  - `/service`: Domain service-layer implementations and adapters
-    - `/groups`: Business logic for groups/gifters/AI, with tests
-      - `/storage`: DynamoDB-backed repository implementations and helpers, with tests
-        - `/helper`: Helpers for storage (gifter utilities)
-  - `/pkg`: Infrastructure/util packages
-    - `/ai`: AI client abstraction
-      - `/gemini`: Gemini implementation and tests
-    - `/dynamodb`: DynamoDB client builder
-    - `/error`: Custom error types (validation, notfound, rate-limit, unknown)
-    - `/front`: Frontend helper (template hosting/serving)
-    - `/secrets`: Secrets loader
-- `/docs`: Generated Swagger docs (`swagger.json`, `swagger.yaml`, `docs.go`)
+```
+go/
+├── cmd/                    # Entrypoints (main packages)
+│   ├── container/          # Docker container server (port 8888)
+│   └── lambda/             # AWS Lambda handler
+├── internal/               # Private application code
+│   ├── server/             # HTTP server, routing, CORS, error mapping
+│   ├── handler/            # HTTP endpoint handlers (by feature)
+│   ├── domain/             # Core domain models and interfaces
+│   ├── service/            # Business logic implementations
+│   ├── integration/        # External service adapters (Brevo, Amazon)
+│   └── pkg/                # Shared utilities (errors, DynamoDB, AI)
+└── docs/                   # Generated Swagger docs (swag init)
+```
 
 > Infrastructure (AWS CDK) is managed in a separate module at the project root.
 
 # Integrations
 
 Default external service integrations are :
-- DynamoDB for storage
-- Brevo for mailing
 - logrus for logging
