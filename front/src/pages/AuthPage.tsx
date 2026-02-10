@@ -1,6 +1,17 @@
+import { useNavigate } from 'react-router-dom'
+import LoginCard from '@/components/auth/LoginCard'
+import type { AuthTokensResponse } from '@/services/auth'
 import '../styles/auth.css'
 
 export default function AuthPage() {
+  const navigate = useNavigate()
+
+  function handleLoginSuccess(tokens: AuthTokensResponse) {
+    localStorage.setItem('idToken', tokens.idToken)
+    localStorage.setItem('refreshToken', tokens.refreshToken)
+    navigate('/')
+  }
+
   return (
     <div className="app">
       <div className="ambient-glow ambient-glow-1" />
@@ -16,11 +27,7 @@ export default function AuthPage() {
         </header>
 
         <div className="auth-cards">
-          <section className="auth-card">
-            <h2 className="auth-card-title">Log In</h2>
-            <p className="auth-card-description">Return to your dashboard</p>
-            {/* LoginCard will be placed here in AUTH-003 */}
-          </section>
+          <LoginCard onLoginSuccess={handleLoginSuccess} />
 
           <section className="auth-card">
             <h2 className="auth-card-title">Sign Up</h2>
