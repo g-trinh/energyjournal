@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import LoginCard from '@/components/auth/LoginCard'
+import SignupCard from '@/components/auth/SignupCard'
 import type { AuthTokensResponse } from '@/services/auth'
 import '../styles/auth.css'
 
@@ -29,13 +30,7 @@ export default function AuthPage() {
         <div className="auth-cards">
           <LoginCard onLoginSuccess={handleLoginSuccess} />
 
-          <section className="auth-card">
-            <h2 className="auth-card-title">Sign Up</h2>
-            <p className="auth-card-description">
-              Create your account in seconds
-            </p>
-            {/* SignupCard will be placed here in AUTH-004 */}
-          </section>
+          <SignupCard />
         </div>
       </main>
     </div>
