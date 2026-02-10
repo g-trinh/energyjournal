@@ -8,6 +8,11 @@ import (
 )
 
 func MapErrors(err error) (statusCode int, message string) {
+	var authErr *errpkg.AuthenticationError
+	if errors.As(err, &authErr) {
+		return http.StatusUnauthorized, authErr.Error()
+	}
+
 	var validationErr *errpkg.InputValidationError
 	if errors.As(err, &validationErr) {
 		return http.StatusBadRequest, validationErr.Error()

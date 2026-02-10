@@ -55,6 +55,23 @@ func NewRateLimitError(message string) *RateLimitError {
 	return &RateLimitError{Message: message}
 }
 
+// AuthenticationError represents an authentication failure.
+type AuthenticationError struct {
+	Message string
+}
+
+func (e *AuthenticationError) Error() string {
+	if e.Message != "" {
+		return e.Message
+	}
+	return "authentication failed"
+}
+
+// NewAuthenticationError creates a new AuthenticationError.
+func NewAuthenticationError(message string) *AuthenticationError {
+	return &AuthenticationError{Message: message}
+}
+
 // UnknownError represents an unexpected internal error.
 type UnknownError struct {
 	Err error

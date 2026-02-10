@@ -1,11 +1,12 @@
 package user
 
 type CreateUserRequest struct {
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Timezone  string `json:"timezone"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirmPassword"`
+	FirstName       string `json:"firstname"`
+	LastName        string `json:"lastname"`
+	Timezone        string `json:"timezone"`
 }
 
 type UpdateUserRequest struct {

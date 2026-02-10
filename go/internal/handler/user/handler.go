@@ -2,11 +2,12 @@ package user
 
 import (
 	"encoding/json"
-	"energyjournal/internal/server/middleware"
+	"log"
 	"net/http"
 
 	"energyjournal/internal/domain/user"
 	"energyjournal/internal/pkg/httputil"
+	"energyjournal/internal/server/middleware"
 )
 
 type UserHandler struct {
@@ -17,42 +18,100 @@ func NewUserHandler(userService user.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
+// Create handles POST /users.
+// Returns the same accepted response even when the email already exists
+// to prevent account enumeration.
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Invalid request body."})
 		return
 	}
 
-	if req.Email == "" || req.Password == "" {
-		http.Error(w, "Email and password are required", http.StatusBadRequest)
+	if req.Email == "" || req.Password == "" || req.ConfirmPassword == "" {
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Email, password, and confirmPassword are required."})
 		return
 	}
 
-	u, err := h.userService.Create(r.Context(), req.Email, req.Password, req.FirstName, req.LastName, req.Timezone)
+	if req.Password != req.ConfirmPassword {
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Password and confirmPassword must match."})
+		return
+	}
+
+	_, err := h.userService.Create(r.Context(), req.Email, req.Password, req.FirstName, req.LastName, req.Timezone)
 	if err != nil {
-		httputil.WriteError(w, err)
-		return
+		// Anti-enumeration: return the same success response regardless of error cause.
+		// Log the actual error for operational visibility.
+		log.Printf("user create error (suppressed for anti-enumeration): %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(NewUserResponse(u))
+	writeJSON(w, http.StatusCreated, CreateUserAcceptedResponse{
+		Message: "Check your email to activate your account.",
+		Status:  "pending_activation",
+	})
 }
 
+// Activate handles POST /users/activate?token=...
 func (h *UserHandler) Activate(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		http.Error(w, "Missing token", http.StatusBadRequest)
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Missing activation token."})
 		return
 	}
 
 	if err := h.userService.Activate(r.Context(), token); err != nil {
-		httputil.WriteError(w, err)
+		statusCode, _ := httputil.MapErrors(err)
+		writeJSON(w, statusCode, GenericErrorResponse{Message: "Activation failed."})
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	writeJSON(w, http.StatusOK, ActivationResponse{Message: "Account activated successfully."})
+}
+
+// Login handles POST /users/login.
+// All failure causes return the same generic message.
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Invalid request body."})
+		return
+	}
+
+	if req.Email == "" || req.Password == "" {
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Email and password are required."})
+		return
+	}
+
+	tokens, err := h.userService.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, GenericErrorResponse{Message: "Invalid email or password."})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, NewAuthTokensResponse(tokens))
+}
+
+// RefreshToken handles POST /users/refresh.
+// Failures return a generic error response.
+func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var req RefreshRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Invalid request body."})
+		return
+	}
+
+	if req.RefreshToken == "" {
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Refresh token is required."})
+		return
+	}
+
+	tokens, err := h.userService.RefreshToken(r.Context(), req.RefreshToken)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, GenericErrorResponse{Message: "Unable to refresh token."})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, NewAuthTokensResponse(tokens))
 }
 
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -62,8 +121,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(NewUserResponse(u))
+	writeJSON(w, http.StatusOK, NewUserResponse(u))
 }
 
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
@@ -85,8 +143,7 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(NewUserResponse(updated))
+	writeJSON(w, http.StatusOK, NewUserResponse(updated))
 }
 
 func (h *UserHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
@@ -104,46 +161,8 @@ func (h *UserHandler) DeleteProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	if req.Email == "" || req.Password == "" {
-		http.Error(w, "Email and password are required", http.StatusBadRequest)
-		return
-	}
-
-	tokens, err := h.userService.Login(r.Context(), req.Email, req.Password)
-	if err != nil {
-		httputil.WriteError(w, err)
-		return
-	}
-
+func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(NewAuthTokensResponse(tokens))
-}
-
-func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	var req RefreshRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	if req.RefreshToken == "" {
-		http.Error(w, "Refresh token is required", http.StatusBadRequest)
-		return
-	}
-
-	tokens, err := h.userService.RefreshToken(r.Context(), req.RefreshToken)
-	if err != nil {
-		httputil.WriteError(w, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(NewAuthTokensResponse(tokens))
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(v)
 }

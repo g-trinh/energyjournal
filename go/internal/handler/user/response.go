@@ -22,6 +22,19 @@ type AuthTokensResponse struct {
 	ExpiresIn    string `json:"expiresIn"`
 }
 
+type GenericErrorResponse struct {
+	Message string `json:"message"`
+}
+
+type CreateUserAcceptedResponse struct {
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}
+
+type ActivationResponse struct {
+	Message string `json:"message"`
+}
+
 func NewAuthTokensResponse(t *user.AuthTokens) *AuthTokensResponse {
 	return &AuthTokensResponse{
 		IDToken:      t.IDToken,
