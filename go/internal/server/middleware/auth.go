@@ -7,6 +7,7 @@ import (
 
 	"energyjournal/internal/domain/user"
 	"energyjournal/internal/pkg/firebase"
+	"firebase.google.com/go/v4/auth"
 )
 
 type ContextKey string
@@ -16,14 +17,24 @@ const ContextKeyUID ContextKey = "uid"
 const ContextKeyEmail ContextKey = "email"
 
 type AuthMiddleware struct {
-	firebaseClient *firebase.Client
-	userRepo       user.UserRepository
+	tokenVerifier IDTokenVerifier
+	userRepo      user.UserRepository
+}
+
+// IDTokenVerifier validates and decodes ID tokens.
+type IDTokenVerifier interface {
+	VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error)
 }
 
 func NewAuthMiddleware(firebaseClient *firebase.Client, userRepo user.UserRepository) *AuthMiddleware {
+	return NewAuthMiddlewareWithVerifier(firebaseClient, userRepo)
+}
+
+// NewAuthMiddlewareWithVerifier allows injecting a verifier (useful for tests).
+func NewAuthMiddlewareWithVerifier(verifier IDTokenVerifier, userRepo user.UserRepository) *AuthMiddleware {
 	return &AuthMiddleware{
-		firebaseClient: firebaseClient,
-		userRepo:       userRepo,
+		tokenVerifier: verifier,
+		userRepo:      userRepo,
 	}
 }
 
@@ -35,7 +46,12 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		decoded, err := m.firebaseClient.VerifyIDToken(r.Context(), token)
+		if m.tokenVerifier == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		decoded, err := m.tokenVerifier.VerifyIDToken(r.Context(), token)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -58,7 +74,12 @@ func (m *AuthMiddleware) RequireActiveUser(next http.Handler) http.Handler {
 			return
 		}
 
-		decoded, err := m.firebaseClient.VerifyIDToken(r.Context(), token)
+		if m.tokenVerifier == nil || m.userRepo == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		decoded, err := m.tokenVerifier.VerifyIDToken(r.Context(), token)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
