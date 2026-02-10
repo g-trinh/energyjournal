@@ -52,7 +52,9 @@ func New(addr string) *http.Server {
 	authProvider := firebase.NewAuthProvider(firebaseClient, os.Getenv("FIREBASE_API_KEY"))
 	emailSender := &noopEmailSender{} // TODO: implement real email sender
 
-	userService := userservice.NewUserService(userRepo, tokenRepo, authProvider, emailSender)
+	activationBaseURL := lookupEnvOrDefault("FRONTEND_ACTIVATION_BASE_URL", "http://localhost:8080")
+
+	userService := userservice.NewUserService(userRepo, tokenRepo, authProvider, emailSender, activationBaseURL)
 	authMiddleware := middleware.NewAuthMiddleware(firebaseClient, userRepo)
 
 	deps := Dependencies{
@@ -72,8 +74,8 @@ func New(addr string) *http.Server {
 // TODO: Replace with real implementation (e.g., Brevo, SendGrid).
 type noopEmailSender struct{}
 
-func (s *noopEmailSender) SendActivationEmail(ctx context.Context, email, token string) error {
-	log.Printf("Would send activation email to %s with token %s", email, token)
+func (s *noopEmailSender) SendActivationEmail(ctx context.Context, email, activationLink string) error {
+	log.Printf("Would send activation email to %s with link %s", email, activationLink)
 	return nil
 }
 

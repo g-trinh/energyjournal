@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"energyjournal/internal/domain/user"
@@ -11,18 +12,20 @@ import (
 )
 
 type userService struct {
-	userRepo     user.UserRepository
-	tokenRepo    user.ActivationTokenRepository
-	authProvider user.AuthProvider
-	emailSender  user.EmailSender
+	userRepo              user.UserRepository
+	tokenRepo             user.ActivationTokenRepository
+	authProvider          user.AuthProvider
+	emailSender           user.EmailSender
+	activationBaseURL     string
 }
 
-func NewUserService(userRepo user.UserRepository, tokenRepo user.ActivationTokenRepository, authProvider user.AuthProvider, emailSender user.EmailSender) user.UserService {
+func NewUserService(userRepo user.UserRepository, tokenRepo user.ActivationTokenRepository, authProvider user.AuthProvider, emailSender user.EmailSender, activationBaseURL string) user.UserService {
 	return &userService{
-		userRepo:     userRepo,
-		tokenRepo:    tokenRepo,
-		authProvider: authProvider,
-		emailSender:  emailSender,
+		userRepo:          userRepo,
+		tokenRepo:         tokenRepo,
+		authProvider:      authProvider,
+		emailSender:       emailSender,
+		activationBaseURL: activationBaseURL,
 	}
 }
 
@@ -62,7 +65,8 @@ func (s *userService) Create(ctx context.Context, email, password, firstname, la
 		return nil, err
 	}
 
-	if err := s.emailSender.SendActivationEmail(ctx, email, token); err != nil {
+	activationLink := fmt.Sprintf("%s/activate?token=%s", s.activationBaseURL, token)
+	if err := s.emailSender.SendActivationEmail(ctx, email, activationLink); err != nil {
 		return nil, err
 	}
 

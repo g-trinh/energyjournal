@@ -20,5 +20,5 @@ type AuthProvider interface {
 }
 
 type EmailSender interface {
-	SendActivationEmail(ctx context.Context, email, token string) error
+	SendActivationEmail(ctx context.Context, email, activationLink string) error
 }
