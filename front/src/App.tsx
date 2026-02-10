@@ -1,5 +1,7 @@
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { useNavigate } from 'react-router-dom'
+import { clearSession, getIdToken } from '@/lib/session'
 import './App.css'
 
 type Spendings = Record<string, number>
@@ -45,6 +47,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<
 }
 
 function App() {
+  const navigate = useNavigate()
   const [data, setData] = useState<ChartData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -70,11 +73,30 @@ function App() {
   const [totalHours, setTotalHours] = useState(0)
   const chartRef = useRef<HTMLDivElement>(null)
 
-  const fetchSpendings = async () => {
+  const fetchSpendings = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`/api/calendar/spending?start=${startDate}&end=${endDate}`)
+      const token = getIdToken()
+
+      if (!token) {
+        clearSession()
+        navigate('/auth', { replace: true })
+        return
+      }
+
+      const response = await fetch(`/api/calendar/spending?start=${startDate}&end=${endDate}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.status === 401) {
+        clearSession()
+        navigate('/auth', { replace: true })
+        return
+      }
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)
       }
@@ -89,11 +111,11 @@ function App() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [endDate, navigate, startDate])
 
   useEffect(() => {
     fetchSpendings()
-  }, [])
+  }, [fetchSpendings])
 
   const handleRefresh = () => {
     if (chartRef.current) {
