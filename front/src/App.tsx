@@ -11,6 +11,8 @@ interface ChartData {
   hours: number
 }
 
+type FetchErrorKind = 'offline' | 'generic'
+
 // Warm, organic color palette
 const CATEGORY_COLORS: Record<string, string> = {
   'Travail': '#e8a445',      // Amber gold
@@ -51,6 +53,7 @@ function App() {
   const [data, setData] = useState<ChartData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorKind, setErrorKind] = useState<FetchErrorKind>('generic')
   const [startDate, setStartDate] = useState(() => {
     const today = new Date()
     const dayOfWeek = today.getDay()
@@ -76,7 +79,19 @@ function App() {
   const fetchSpendings = useCallback(async () => {
     setLoading(true)
     setError(null)
+    setErrorKind('generic')
     try {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+        setError('Please use valid start and end dates.')
+        return
+      }
+
+      if (startDate > endDate) {
+        setError('Start date cannot be after end date.')
+        return
+      }
+
       const token = getIdToken()
 
       if (!token) {
@@ -102,11 +117,17 @@ function App() {
       }
       const spendings: Spendings = await response.json()
       const chartData = Object.entries(spendings)
+        .filter(([name, hours]) => typeof name === 'string' && typeof hours === 'number' && Number.isFinite(hours))
         .map(([name, hours]) => ({ name, hours }))
         .sort((a, b) => b.hours - a.hours)
       setData(chartData)
       setTotalHours(chartData.reduce((acc, item) => acc + item.hours, 0))
     } catch (err) {
+      const offline =
+        !navigator.onLine ||
+        (err instanceof TypeError && err.message.toLowerCase().includes('fetch'))
+
+      setErrorKind(offline ? 'offline' : 'generic')
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
     } finally {
       setLoading(false)
@@ -232,7 +253,9 @@ function App() {
                   <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </div>
-              <p className="error-message">Unable to connect</p>
+              <p className="error-message">
+                {errorKind === 'offline' ? 'You are offline' : 'Unable to load data'}
+              </p>
               <p className="error-detail">{error}</p>
               <button className="retry-btn" onClick={handleRefresh}>Try again</button>
             </div>
