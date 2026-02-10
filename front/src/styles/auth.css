@@ -38,17 +38,18 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Auth Cards Container
+   Auth Cards Container — side-by-side on desktop, stacked on mobile
    ───────────────────────────────────────────────────────────────────────────── */
 .auth-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-xl);
+  align-items: stretch;
   animation: slideUp 0.8s var(--ease-out-expo) 0.1s both;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Auth Card
+   Auth Card — flex column so CTA can be bottom-anchored via margin-top: auto
    ───────────────────────────────────────────────────────────────────────────── */
 .auth-card {
   background: var(--color-bg-card);
@@ -58,7 +59,7 @@
   backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
-  min-height: 480px;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.28);
 }
 
 .auth-card-title {
@@ -131,6 +132,12 @@
   box-shadow: 0 0 0 3px var(--color-accent-amber-glow);
 }
 
+.auth-field input:focus-visible {
+  outline: 2px solid var(--color-accent-amber);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
 .auth-field-error input {
   border-color: var(--color-accent-terracotta);
 }
@@ -140,13 +147,18 @@
   box-shadow: 0 0 0 3px rgba(196, 130, 109, 0.3);
 }
 
+.auth-field-error input:focus-visible {
+  outline-color: var(--color-accent-terracotta);
+}
+
 .auth-field-error-text {
   font-size: 0.8125rem;
   color: var(--color-accent-terracotta);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Auth CTA Area (bottom-anchored)
+   Auth CTA Area — bottom-anchored via margin-top: auto on flex child
+   Both cards keep equal CTA height alignment regardless of form length
    ───────────────────────────────────────────────────────────────────────────── */
 .auth-cta-area {
   margin-top: auto;
@@ -171,6 +183,11 @@
   justify-content: center;
   gap: var(--space-sm);
   min-height: 56px;
+}
+
+.auth-btn:focus-visible {
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: 2px;
 }
 
 .auth-btn:disabled {
@@ -209,7 +226,8 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Auth Feedback Message
+   Auth Feedback Message — rendered above CTA, no layout jump that breaks
+   the bottom anchor (feedback is inside the margin-top:auto area)
    ───────────────────────────────────────────────────────────────────────────── */
 .auth-feedback {
   font-size: 0.875rem;
@@ -254,6 +272,7 @@
   backdrop-filter: blur(20px);
   text-align: center;
   width: 100%;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.28);
   animation: slideUp 0.8s var(--ease-out-expo) both;
 }
 
@@ -304,6 +323,14 @@
   .auth-content {
     padding: var(--space-xl) var(--space-md);
     gap: var(--space-xl);
+  }
+
+  .auth-headline {
+    text-align: center;
+  }
+
+  .auth-subline {
+    text-align: center;
   }
 
   .auth-cards {
