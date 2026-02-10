@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useNavigate } from 'react-router-dom'
+import { trackEvent } from '@/lib/analytics'
 import { clearSession, getIdToken } from '@/lib/session'
 import './App.css'
 
@@ -128,6 +129,9 @@ function App() {
         (err instanceof TypeError && err.message.toLowerCase().includes('fetch'))
 
       setErrorKind(offline ? 'offline' : 'generic')
+      trackEvent('timespending_load_failed', {
+        kind: offline ? 'offline' : 'generic',
+      })
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
     } finally {
       setLoading(false)

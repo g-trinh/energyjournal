@@ -1,4 +1,5 @@
 import LoginCard from '@/components/auth/LoginCard'
+import { trackEvent } from '@/lib/analytics'
 import SignupCard from '@/components/auth/SignupCard'
 import { persistSession } from '@/lib/session'
 import type { AuthTokensResponse } from '@/services/auth'
@@ -10,6 +11,7 @@ export default function AuthPage() {
 
   function handleLoginSuccess(tokens: AuthTokensResponse) {
     persistSession(tokens.idToken, tokens.refreshToken)
+    trackEvent('auth_login_success')
     navigate('/timespending', { replace: true })
   }
 
