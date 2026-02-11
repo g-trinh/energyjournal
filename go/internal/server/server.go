@@ -84,7 +84,14 @@ func register(mux *http.ServeMux, deps Dependencies) {
 	mux.HandleFunc("/healthz", health)
 
 	spendingHandler := calendarhandler.NewSpendingHandler(deps.SpendingService)
-	NewRoute(mux, http.MethodGet, "/calendar/spending", spendingHandler.GetSpending)
+	if deps.AuthMiddleware != nil {
+		mux.Handle("GET /calendar/spending", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(spendingHandler.GetSpending)))
+	} else {
+		// Fail closed when auth middleware is unavailable.
+		mux.HandleFunc("GET /calendar/spending", func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		})
+	}
 
 	// User routes
 	if deps.UserService != nil && deps.AuthMiddleware != nil {

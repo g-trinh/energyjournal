@@ -1,16 +1,18 @@
-import { useNavigate } from 'react-router-dom'
 import LoginCard from '@/components/auth/LoginCard'
+import { trackEvent } from '@/lib/analytics'
 import SignupCard from '@/components/auth/SignupCard'
+import { persistSession } from '@/lib/session'
 import type { AuthTokensResponse } from '@/services/auth'
+import { useNavigate } from 'react-router-dom'
 import '../styles/auth.css'
 
 export default function AuthPage() {
   const navigate = useNavigate()
 
   function handleLoginSuccess(tokens: AuthTokensResponse) {
-    localStorage.setItem('idToken', tokens.idToken)
-    localStorage.setItem('refreshToken', tokens.refreshToken)
-    navigate('/')
+    persistSession(tokens.idToken, tokens.refreshToken)
+    trackEvent('auth_login_success')
+    navigate('/timespending', { replace: true })
   }
 
   return (

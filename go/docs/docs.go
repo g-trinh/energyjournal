@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/calendar/spending": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns spending totals by category between two dates (inclusive).",
                 "produces": [
                     "application/json"
@@ -52,6 +57,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/calendar.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/calendar.ErrorResponse"
                         }

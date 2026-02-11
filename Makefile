@@ -2,6 +2,8 @@ BRANCH ?= main
 FRONT_BRANCH ?= main
 
 worktree:
+	git fetch
+	git pull
 	git worktree add trees/$(NEW_BRANCH) $(BRANCH) -B $(NEW_BRANCH) && cd trees/$(NEW_BRANCH)
 
 build-front:

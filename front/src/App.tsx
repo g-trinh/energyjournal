@@ -1,5 +1,8 @@
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { useNavigate } from 'react-router-dom'
+import { trackEvent } from '@/lib/analytics'
+import { clearSession, getIdToken } from '@/lib/session'
 import './App.css'
 
 type Spendings = Record<string, number>
@@ -8,6 +11,8 @@ interface ChartData {
   name: string
   hours: number
 }
+
+type FetchErrorKind = 'offline' | 'generic'
 
 // Warm, organic color palette
 const CATEGORY_COLORS: Record<string, string> = {
@@ -45,9 +50,11 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<
 }
 
 function App() {
+  const navigate = useNavigate()
   const [data, setData] = useState<ChartData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorKind, setErrorKind] = useState<FetchErrorKind>('generic')
   const [startDate, setStartDate] = useState(() => {
     const today = new Date()
     const dayOfWeek = today.getDay()
@@ -70,30 +77,70 @@ function App() {
   const [totalHours, setTotalHours] = useState(0)
   const chartRef = useRef<HTMLDivElement>(null)
 
-  const fetchSpendings = async () => {
+  const fetchSpendings = useCallback(async () => {
     setLoading(true)
     setError(null)
+    setErrorKind('generic')
     try {
-      const response = await fetch(`/api/calendar/spending?start=${startDate}&end=${endDate}`)
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+        setError('Please use valid start and end dates.')
+        return
+      }
+
+      if (startDate > endDate) {
+        setError('Start date cannot be after end date.')
+        return
+      }
+
+      const token = getIdToken()
+
+      if (!token) {
+        clearSession()
+        navigate('/auth', { replace: true })
+        return
+      }
+
+      const response = await fetch(`/api/calendar/spending?start=${startDate}&end=${endDate}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.status === 401) {
+        clearSession()
+        navigate('/auth', { replace: true })
+        return
+      }
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)
       }
       const spendings: Spendings = await response.json()
       const chartData = Object.entries(spendings)
+        .filter(([name, hours]) => typeof name === 'string' && typeof hours === 'number' && Number.isFinite(hours))
         .map(([name, hours]) => ({ name, hours }))
         .sort((a, b) => b.hours - a.hours)
       setData(chartData)
       setTotalHours(chartData.reduce((acc, item) => acc + item.hours, 0))
     } catch (err) {
+      const offline =
+        !navigator.onLine ||
+        (err instanceof TypeError && err.message.toLowerCase().includes('fetch'))
+
+      setErrorKind(offline ? 'offline' : 'generic')
+      trackEvent('timespending_load_failed', {
+        kind: offline ? 'offline' : 'generic',
+      })
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
     } finally {
       setLoading(false)
     }
-  }
+  }, [endDate, navigate, startDate])
 
   useEffect(() => {
     fetchSpendings()
-  }, [])
+  }, [fetchSpendings])
 
   const handleRefresh = () => {
     if (chartRef.current) {
@@ -210,7 +257,9 @@ function App() {
                   <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </div>
-              <p className="error-message">Unable to connect</p>
+              <p className="error-message">
+                {errorKind === 'offline' ? 'You are offline' : 'Unable to load data'}
+              </p>
               <p className="error-detail">{error}</p>
               <button className="retry-btn" onClick={handleRefresh}>Try again</button>
             </div>
