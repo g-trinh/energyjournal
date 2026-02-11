@@ -78,6 +78,8 @@ paths:
   /calendar/spending:
     get:
       description: Returns spending totals by category between two dates (inclusive).
+      security:
+      - BearerAuth: []
       parameters:
       - description: Start date (YYYY-MM-DD)
         example: "2026-01-01"
@@ -100,6 +102,10 @@ paths:
             $ref: '#/definitions/calendar.SpendingResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/calendar.ErrorResponse'
         "404":
