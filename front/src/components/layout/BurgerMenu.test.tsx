@@ -19,6 +19,7 @@ describe('BurgerMenu', () => {
       status: 'authenticated',
       email: 'person@example.com',
       isAuthenticated: true,
+      signIn: vi.fn(),
       signOut: vi.fn(),
     })
 
@@ -42,6 +43,7 @@ describe('BurgerMenu', () => {
       status: 'anonymous',
       email: null,
       isAuthenticated: false,
+      signIn: vi.fn(),
       signOut: vi.fn(),
     })
 
@@ -66,6 +68,7 @@ describe('BurgerMenu', () => {
       status: 'authenticated',
       email: 'person@example.com',
       isAuthenticated: true,
+      signIn: vi.fn(),
       signOut,
     })
 
@@ -90,6 +93,7 @@ describe('BurgerMenu', () => {
       status: 'anonymous',
       email: null,
       isAuthenticated: false,
+      signIn: vi.fn(),
       signOut: vi.fn(),
     })
 

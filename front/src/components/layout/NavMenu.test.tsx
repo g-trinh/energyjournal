@@ -19,6 +19,7 @@ describe('NavMenu', () => {
       status: 'authenticated',
       email: 'person@example.com',
       isAuthenticated: true,
+      signIn: vi.fn(),
       signOut: vi.fn(),
     })
 
@@ -38,6 +39,7 @@ describe('NavMenu', () => {
       status: 'anonymous',
       email: null,
       isAuthenticated: false,
+      signIn: vi.fn(),
       signOut: vi.fn(),
     })
 

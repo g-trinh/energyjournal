@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import AuthPage from './AuthPage'
+import { useAuth } from '@/contexts/AuthContext'
 
 vi.mock('@/components/auth/LoginCard', () => ({
   default: ({ onLoginSuccess }: { onLoginSuccess: (tokens: { idToken: string; refreshToken: string; expiresIn: string }) => void }) => (
@@ -23,9 +24,23 @@ vi.mock('@/components/auth/SignupCard', () => ({
   default: () => <div>Signup Card</div>,
 }))
 
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(),
+}))
+
 describe('AuthPage navigation', () => {
+  const mockedUseAuth = vi.mocked(useAuth)
+
   beforeEach(() => {
     localStorage.clear()
+    mockedUseAuth.mockReset()
+    mockedUseAuth.mockReturnValue({
+      status: 'anonymous',
+      email: null,
+      isAuthenticated: false,
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+    })
   })
 
   it('stores tokens and redirects to /timespending after login success', () => {
