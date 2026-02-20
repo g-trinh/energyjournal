@@ -130,12 +130,18 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-cta-section" aria-labelledby="cta-heading">
-          <h2 id="cta-heading">Start understanding your energy today</h2>
-          <div className="landing-cta-banner" />
+          <div className="landing-cta-banner">
+            <h2 id="cta-heading" className="landing-cta-heading">
+              Start understanding your energy today
+            </h2>
+            <Link to="/timespending" className="landing-cta-primary">
+              Create free account →
+            </Link>
+          </div>
         </section>
       </main>
 
-      <footer className="landing-footer">© 2026 Energy Journal</footer>
+      <footer className="landing-footer">© 2026 Energy Journal · Track your energy, own your days</footer>
     </div>
   )
 }
