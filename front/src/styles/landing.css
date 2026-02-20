@@ -1,0 +1,81 @@
+.landing-page {
+  background: var(--color-bg-deep);
+}
+
+.landing-main {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 5rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+}
+
+.landing-hero,
+.landing-features,
+.landing-steps,
+.landing-cta-section {
+  width: 100%;
+}
+
+.landing-hero-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.landing-chart-card {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.landing-features-grid {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.landing-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  backdrop-filter: blur(20px);
+}
+
+.landing-steps {
+  text-align: center;
+}
+
+.landing-cta-banner {
+  max-width: 880px;
+  margin: 0 auto;
+  min-height: 116px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-amber) 25%, var(--color-border));
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-card);
+  backdrop-filter: blur(20px);
+}
+
+.landing-footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .landing-main {
+    padding: 1.5rem 1.25rem 2.5rem;
+    gap: 2.5rem;
+  }
+
+  .landing-features-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
