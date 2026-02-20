@@ -110,6 +110,23 @@ export default function LandingPage() {
 
         <section className="landing-steps" aria-labelledby="steps-heading">
           <h2 id="steps-heading">Simple to start, powerful over time</h2>
+          <ol className="landing-steps-track">
+            <li className="landing-step">
+              <span className="landing-step-circle landing-step-circle-active">1</span>
+              <h3 className="landing-step-label">Log daily</h3>
+              <p className="landing-step-desc">Rate each energy type 0-10 in seconds</p>
+            </li>
+            <li className="landing-step">
+              <span className="landing-step-circle">2</span>
+              <h3 className="landing-step-label">See patterns</h3>
+              <p className="landing-step-desc">Watch your energy trends across weeks</p>
+            </li>
+            <li className="landing-step">
+              <span className="landing-step-circle">3</span>
+              <h3 className="landing-step-label">Act with clarity</h3>
+              <p className="landing-step-desc">Make decisions based on your real data</p>
+            </li>
+          </ol>
         </section>
 
         <section className="landing-cta-section" aria-labelledby="cta-heading">
