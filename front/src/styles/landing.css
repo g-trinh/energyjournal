@@ -1,10 +1,12 @@
 .landing-page {
   background: var(--color-bg-deep);
+  overflow-x: clip;
 }
 
 .landing-main {
   position: relative;
   z-index: 1;
+  width: min(100%, 1280px);
   max-width: 1280px;
   margin: 0 auto;
   padding: 2.5rem 5rem 3.5rem;
@@ -21,9 +23,23 @@
 }
 
 .landing-hero-inner {
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
   text-align: center;
+}
+
+.landing-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .landing-eyebrow {
@@ -322,6 +338,12 @@
   color: var(--color-text-secondary);
   text-align: center;
   padding: 1.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .ambient-glow {
+    animation: none;
+  }
 }
 
 @media (max-width: 768px) {

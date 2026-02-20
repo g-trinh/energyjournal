@@ -22,9 +22,12 @@ export default function LandingPage() {
 
       <main aria-label="Landing page" className="landing-main">
         <section className="landing-hero" aria-labelledby="hero-heading">
+          <h2 id="hero-heading" className="landing-visually-hidden">
+            Hero
+          </h2>
           <div className="landing-hero-inner">
             <p className="landing-eyebrow">PERSONAL ENERGY INTELLIGENCE</p>
-            <h1 id="hero-heading" className="landing-hero-title">
+            <h1 className="landing-hero-title">
               Know your energy,
               {' '}
               <em className="landing-hero-title-accent">design your best days.</em>
