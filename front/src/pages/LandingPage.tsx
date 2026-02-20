@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import '../App.css'
 import '@/styles/landing.css'
 
@@ -11,7 +12,19 @@ export default function LandingPage() {
       <main aria-label="Landing page" className="landing-main">
         <section className="landing-hero" aria-labelledby="hero-heading">
           <div className="landing-hero-inner">
-            <h1 id="hero-heading">Know your energy</h1>
+            <p className="landing-eyebrow">PERSONAL ENERGY INTELLIGENCE</p>
+            <h1 id="hero-heading" className="landing-hero-title">
+              Know your energy,
+              {' '}
+              <em className="landing-hero-title-accent">design your best days.</em>
+            </h1>
+            <p className="landing-hero-subline">
+              Track Physical, Mental, and Emotional energy - discover the patterns that shape your
+              performance, day after day.
+            </p>
+            <Link to="/timespending" className="landing-cta-primary">
+              Start tracking →
+            </Link>
           </div>
         </section>
 
