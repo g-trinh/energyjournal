@@ -158,21 +158,6 @@ function App() {
       <div className="grain-overlay" />
 
       <main className="main-content">
-        {/* Header */}
-        <header className="header">
-          <div className="logo-mark">
-            <svg viewBox="0 0 32 32" className="logo-icon">
-              <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
-              <circle cx="16" cy="16" r="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-              <circle cx="16" cy="16" r="4" fill="currentColor" />
-            </svg>
-          </div>
-          <div className="header-text">
-            <h1>Energy Journal</h1>
-            <p className="tagline">Where does your time flow?</p>
-          </div>
-        </header>
-
         {/* Date Range Card */}
         <section className="date-range-card">
           <div className="date-range-inner">

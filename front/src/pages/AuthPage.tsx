@@ -1,6 +1,7 @@
 import LoginCard from '@/components/auth/LoginCard'
 import { trackEvent } from '@/lib/analytics'
 import SignupCard from '@/components/auth/SignupCard'
+import { useAuth } from '@/contexts/AuthContext'
 import { persistSession } from '@/lib/session'
 import type { AuthTokensResponse } from '@/services/auth'
 import { useNavigate } from 'react-router-dom'
@@ -8,9 +9,11 @@ import '../styles/auth.css'
 
 export default function AuthPage() {
   const navigate = useNavigate()
+  const { signIn } = useAuth()
 
-  function handleLoginSuccess(tokens: AuthTokensResponse) {
+  function handleLoginSuccess(tokens: AuthTokensResponse, email: string) {
     persistSession(tokens.idToken, tokens.refreshToken)
+    signIn(email)
     trackEvent('auth_login_success')
     navigate('/timespending', { replace: true })
   }
