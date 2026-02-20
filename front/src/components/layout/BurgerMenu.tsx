@@ -70,10 +70,11 @@ export default function BurgerMenu({ open, onClose, triggerRef }: BurgerMenuProp
     }
 
     document.addEventListener('keydown', onKeyDown)
+    const triggerElement = triggerRef.current
 
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      triggerRef.current?.focus()
+      triggerElement?.focus()
     }
   }, [open, onClose, triggerRef])
 

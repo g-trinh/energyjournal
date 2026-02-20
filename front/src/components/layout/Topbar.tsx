@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import BurgerMenu from './BurgerMenu'
 import LogoMark from './LogoMark'
@@ -8,12 +8,13 @@ import '@/styles/topbar.css'
 
 export default function Topbar() {
   const location = useLocation()
-  const [burgerOpen, setBurgerOpen] = useState(false)
+  const [burgerMenuState, setBurgerMenuState] = useState<{ open: boolean; path: string }>({
+    open: false,
+    path: location.pathname,
+  })
   const triggerRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    setBurgerOpen(false)
-  }, [location.pathname])
+  const burgerOpen = burgerMenuState.open && burgerMenuState.path === location.pathname
 
   return (
     <header className="topbar" role="banner">
@@ -41,13 +42,22 @@ export default function Topbar() {
           aria-haspopup="dialog"
           aria-expanded={burgerOpen}
           aria-label={burgerOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setBurgerOpen((current) => !current)}
+          onClick={() =>
+            setBurgerMenuState((current) => ({
+              open: !current.open,
+              path: location.pathname,
+            }))
+          }
         >
           {burgerOpen ? '×' : '☰'}
         </button>
       </div>
 
-      <BurgerMenu open={burgerOpen} onClose={() => setBurgerOpen(false)} triggerRef={triggerRef} />
+      <BurgerMenu
+        open={burgerOpen}
+        onClose={() => setBurgerMenuState((current) => ({ ...current, open: false }))}
+        triggerRef={triggerRef}
+      />
     </header>
   )
 }
