@@ -3,7 +3,7 @@ import { login, type AuthTokensResponse } from '@/services/auth'
 import { cn } from '@/lib/utils'
 
 interface LoginCardProps {
-  onLoginSuccess: (tokens: AuthTokensResponse) => void
+  onLoginSuccess: (tokens: AuthTokensResponse, email: string) => void
 }
 
 export default function LoginCard({ onLoginSuccess }: LoginCardProps) {
@@ -42,7 +42,7 @@ export default function LoginCard({ onLoginSuccess }: LoginCardProps) {
     setSubmitting(false)
 
     if (result.ok) {
-      onLoginSuccess(result.data)
+      onLoginSuccess(result.data, email)
     } else {
       setFeedback({ type: 'error', message: 'Invalid email or password.' })
     }

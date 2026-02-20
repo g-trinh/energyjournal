@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
 import AppRouter from './AppRouter'
 
 vi.mock('./App', () => ({
@@ -21,9 +22,21 @@ vi.mock('./pages/LandingPage', () => ({
 describe('AppRouter route access', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ email: 'person@example.com' }),
+      }),
+    )
   })
 
-  it('allows anonymous users to access landing, auth, and activate routes', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('allows anonymous users to access landing, auth, and activate routes', async () => {
     const cases = [
       { path: '/', expected: 'Landing Page' },
       { path: '/auth', expected: 'Auth Page' },
@@ -33,41 +46,50 @@ describe('AppRouter route access', () => {
     for (const testCase of cases) {
       const { unmount } = render(
         <MemoryRouter initialEntries={[testCase.path]}>
-          <AppRouter />
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
         </MemoryRouter>,
       )
       expect(
-        screen.getByRole('heading', { name: testCase.expected }),
+        await screen.findByRole('heading', { name: testCase.expected }),
       ).toBeInTheDocument()
+      expect(screen.getByText('Energy Journal')).toBeInTheDocument()
       unmount()
     }
   })
 
-  it('redirects anonymous users from /timespending to /auth', () => {
+  it('redirects anonymous users from /timespending to /auth', async () => {
     render(
       <MemoryRouter initialEntries={['/timespending']}>
-        <AppRouter />
-      </MemoryRouter>,
-    )
-
-    expect(screen.getByRole('heading', { name: 'Auth Page' })).toBeInTheDocument()
-  })
-
-  it('allows authenticated users to access /timespending', () => {
-    localStorage.setItem('idToken', 'token')
-
-    render(
-      <MemoryRouter initialEntries={['/timespending']}>
-        <AppRouter />
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
       </MemoryRouter>,
     )
 
     expect(
-      screen.getByRole('heading', { name: 'Timespending Page' }),
+      await screen.findByRole('heading', { name: 'Auth Page' }),
     ).toBeInTheDocument()
   })
 
-  it('redirects authenticated users from /auth and /activate to /timespending', () => {
+  it('allows authenticated users to access /timespending', async () => {
+    localStorage.setItem('idToken', 'token')
+
+    render(
+      <MemoryRouter initialEntries={['/timespending']}>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    expect(
+      await screen.findByRole('heading', { name: 'Timespending Page' }),
+    ).toBeInTheDocument()
+  })
+
+  it('redirects authenticated users from /auth and /activate to /timespending', async () => {
     localStorage.setItem('idToken', 'token')
 
     const protectedCases = ['/auth', '/activate']
@@ -75,12 +97,14 @@ describe('AppRouter route access', () => {
     for (const path of protectedCases) {
       const { unmount } = render(
         <MemoryRouter initialEntries={[path]}>
-          <AppRouter />
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
         </MemoryRouter>,
       )
 
       expect(
-        screen.getByRole('heading', { name: 'Timespending Page' }),
+        await screen.findByRole('heading', { name: 'Timespending Page' }),
       ).toBeInTheDocument()
 
       unmount()
