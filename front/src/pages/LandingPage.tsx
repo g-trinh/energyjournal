@@ -72,10 +72,39 @@ export default function LandingPage() {
 
         <section className="landing-features" aria-labelledby="features-heading">
           <h2 id="features-heading">Three dimensions of energy</h2>
+          <p className="landing-section-sub">Rate each one from 0 to 10, every day.</p>
           <div className="landing-features-grid">
-            <article className="landing-card">Physical</article>
-            <article className="landing-card">Mental</article>
-            <article className="landing-card">Emotional</article>
+            <article className="landing-card landing-feature-card landing-feature-card-physical">
+              <svg aria-hidden="true" className="landing-feature-icon" viewBox="0 0 24 24">
+                <path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+              <h3 className="landing-feature-title">Physical</h3>
+              <p className="landing-feature-tag">BODY · ENDURANCE</p>
+              <p className="landing-feature-desc">
+                Follow how sleep, activity, and recovery shape your day-to-day stamina.
+              </p>
+            </article>
+            <article className="landing-card landing-feature-card landing-feature-card-mental">
+              <svg aria-hidden="true" className="landing-feature-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+                <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+              </svg>
+              <h3 className="landing-feature-title">Mental</h3>
+              <p className="landing-feature-tag">FOCUS · CLARITY</p>
+              <p className="landing-feature-desc">
+                Understand when concentration peaks and when your cognitive load becomes too high.
+              </p>
+            </article>
+            <article className="landing-card landing-feature-card landing-feature-card-emotional">
+              <svg aria-hidden="true" className="landing-feature-icon" viewBox="0 0 24 24">
+                <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" fill="none" stroke="currentColor" strokeWidth="1.7" />
+              </svg>
+              <h3 className="landing-feature-title">Emotional</h3>
+              <p className="landing-feature-tag">MOOD · RESILIENCE</p>
+              <p className="landing-feature-desc">
+                Spot mood trends early and build routines that protect calm, confidence, and resilience.
+              </p>
+            </article>
           </div>
         </section>
 

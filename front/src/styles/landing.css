@@ -135,10 +135,85 @@
 }
 
 .landing-features-grid {
-  margin-top: 2rem;
+  max-width: 1280px;
+  margin: 2rem auto 0;
+  padding: 0 5rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
+}
+
+.landing-features > h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  text-align: center;
+}
+
+.landing-section-sub {
+  margin-top: 0.8rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+.landing-feature-card {
+  transition: border-color var(--duration-normal) var(--ease-out-expo);
+}
+
+.landing-feature-card:hover {
+  border-color: var(--color-border-hover);
+}
+
+.landing-feature-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.landing-feature-title {
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.landing-feature-tag {
+  margin-top: 0.45rem;
+  color: var(--color-text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.landing-feature-desc {
+  margin-top: 1rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.landing-feature-card-physical {
+  color: var(--color-accent-terracotta);
+}
+
+.landing-feature-card-mental {
+  color: var(--color-accent-seafoam);
+}
+
+.landing-feature-card-emotional {
+  color: var(--color-accent-sage);
+}
+
+.landing-feature-card-physical .landing-feature-tag,
+.landing-feature-card-physical .landing-feature-desc {
+  color: color-mix(in srgb, var(--color-text-secondary) 85%, var(--color-accent-terracotta));
+}
+
+.landing-feature-card-mental .landing-feature-tag,
+.landing-feature-card-mental .landing-feature-desc {
+  color: color-mix(in srgb, var(--color-text-secondary) 85%, var(--color-accent-seafoam));
+}
+
+.landing-feature-card-emotional .landing-feature-tag,
+.landing-feature-card-emotional .landing-feature-desc {
+  color: color-mix(in srgb, var(--color-text-secondary) 85%, var(--color-accent-sage));
 }
 
 .landing-card {
@@ -180,6 +255,7 @@
   .landing-features-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+    padding: 0;
   }
 
   .landing-chart-legend {
