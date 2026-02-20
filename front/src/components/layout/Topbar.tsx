@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import BurgerMenu from './BurgerMenu'
 import LogoMark from './LogoMark'
 import NavMenu from './NavMenu'
@@ -19,10 +19,12 @@ export default function Topbar() {
     <header className="topbar" role="banner">
       <div className="topbar-inner">
         <div className="topbar-left">
-          <div className="topbar-brand" aria-label="Energy Journal">
-            <LogoMark size={36} />
-            <span className="topbar-brand-name">Energy Journal</span>
-          </div>
+          <Link to="/" className="topbar-brand-link" aria-label="Energy Journal home">
+            <div className="topbar-brand" aria-label="Energy Journal">
+              <LogoMark size={36} />
+              <span className="topbar-brand-name">Energy Journal</span>
+            </div>
+          </Link>
 
           <div className="topbar-brand-divider" />
           <NavMenu />
