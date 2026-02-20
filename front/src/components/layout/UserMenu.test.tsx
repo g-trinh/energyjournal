@@ -19,6 +19,7 @@ describe('UserMenu', () => {
       status: 'loading',
       email: null,
       isAuthenticated: false,
+      signIn: vi.fn(),
       signOut: vi.fn(),
     })
 
@@ -36,6 +37,7 @@ describe('UserMenu', () => {
       status: 'anonymous',
       email: null,
       isAuthenticated: false,
+      signIn: vi.fn(),
       signOut: vi.fn(),
     })
 
@@ -58,6 +60,7 @@ describe('UserMenu', () => {
       status: 'authenticated',
       email: 'person@example.com',
       isAuthenticated: true,
+      signIn: vi.fn(),
       signOut,
     })
 

@@ -6,12 +6,12 @@ export default function UserMenu() {
   const navigate = useNavigate()
   const location = useLocation()
   const { status, email, signOut } = useAuth()
-  const [open, setOpen] = useState(false)
+  const [menuState, setMenuState] = useState<{ open: boolean; path: string }>({
+    open: false,
+    path: location.pathname,
+  })
   const rootRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setOpen(false)
-  }, [location.pathname])
+  const open = menuState.open && menuState.path === location.pathname
 
   useEffect(() => {
     if (!open) {
@@ -20,13 +20,13 @@ export default function UserMenu() {
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        setOpen(false)
+        setMenuState((current) => ({ ...current, open: false }))
       }
     }
 
     function onPointerDown(event: MouseEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false)
+        setMenuState((current) => ({ ...current, open: false }))
       }
     }
 
@@ -62,7 +62,12 @@ export default function UserMenu() {
         className="topbar-user-trigger"
         aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() =>
+          setMenuState((current) => ({
+            open: !current.open,
+            path: location.pathname,
+          }))
+        }
       >
         <span className="topbar-user-trigger-email">{email ?? 'Account'}</span>
       </button>
