@@ -93,6 +93,45 @@
   width: 100%;
   max-width: 880px;
   margin: 0 auto;
+  padding: 1.4rem 1.4rem 1.2rem;
+}
+
+.landing-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.landing-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.landing-chart-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.landing-chart-dot-physical {
+  background: #c4826d;
+}
+
+.landing-chart-dot-mental {
+  background: #7eb8b3;
+}
+
+.landing-chart-dot-emotional {
+  background: #8fa58b;
+}
+
+.landing-chart-body {
+  margin-top: 1rem;
+  mask-image: linear-gradient(to right, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
 }
 
 .landing-features-grid {
@@ -141,6 +180,11 @@
   .landing-features-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .landing-chart-legend {
+    flex-wrap: wrap;
+    row-gap: 0.55rem;
   }
 
   .landing-hero-inner {
