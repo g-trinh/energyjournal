@@ -1,0 +1,69 @@
+.energy-slider {
+  width: 100%;
+  height: 14px;
+  appearance: none;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.1) 2px,
+      transparent 2px,
+      transparent 100%
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--track-color) 78%, transparent) 0,
+      color-mix(in srgb, var(--track-color) 78%, transparent) var(--fill),
+      rgba(255, 255, 255, 0.06) var(--fill),
+      rgba(255, 255, 255, 0.06) 100%
+    );
+  cursor: pointer;
+}
+
+.energy-slider:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.energy-slider::-webkit-slider-runnable-track {
+  height: 14px;
+  background: transparent;
+}
+
+.energy-slider::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 2.5px solid #1a1816;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.3) 0 3px, transparent 3px),
+    var(--track-color);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+}
+
+.energy-slider::-moz-range-track {
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.energy-slider::-moz-range-progress {
+  height: 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--track-color) 78%, transparent);
+}
+
+.energy-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 2.5px solid #1a1816;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.3) 0 3px, transparent 3px),
+    var(--track-color);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+}
