@@ -215,3 +215,72 @@ func TestRegister_EnergyLevels_UnauthorizedWithoutToken_PUT(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rr.Code)
 	}
 }
+
+func TestRegister_EnergyLevels_AuthorizedWithToken_GET(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	register(mux, Dependencies{
+		EnergyService: &stubEnergyService{
+			getByDate: func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error) {
+				return &energy.EnergyLevels{
+					UID:       uid,
+					Date:      date,
+					Physical:  7,
+					Mental:    5,
+					Emotional: 8,
+				}, nil
+			},
+		},
+		AuthMiddleware: middleware.NewAuthMiddlewareWithVerifier(&stubVerifier{
+			verifyIDToken: func(ctx context.Context, idToken string) (*auth.Token, error) {
+				return &auth.Token{UID: "uid-1"}, nil
+			},
+		}, &stubUserRepo{
+			getByUID: func(ctx context.Context, uid string) (*user.User, error) {
+				return &user.User{UID: uid, Status: user.StatusActive}, nil
+			},
+		}),
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/energy/levels?date=2026-02-21", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+}
+
+func TestRegister_EnergyLevels_AuthorizedWithToken_PUT(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	register(mux, Dependencies{
+		EnergyService: &stubEnergyService{
+			save: func(ctx context.Context, levels energy.EnergyLevels) error {
+				return nil
+			},
+		},
+		AuthMiddleware: middleware.NewAuthMiddlewareWithVerifier(&stubVerifier{
+			verifyIDToken: func(ctx context.Context, idToken string) (*auth.Token, error) {
+				return &auth.Token{UID: "uid-1"}, nil
+			},
+		}, &stubUserRepo{
+			getByUID: func(ctx context.Context, uid string) (*user.User, error) {
+				return &user.User{UID: uid, Status: user.StatusActive}, nil
+			},
+		}),
+	})
+
+	req := httptest.NewRequest(http.MethodPut, "/energy/levels", strings.NewReader(`{"date":"2026-02-21","physical":7,"mental":5,"emotional":8}`))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+}
