@@ -8,6 +8,132 @@
   },
   "basePath": "/",
   "paths": {
+    "/energy/levels": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Returns the energy levels (physical, mental, emotional) recorded by the authenticated user for the given date. Returns 404 if no record exists for that date.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "energy"
+        ],
+        "summary": "Get energy levels for a date",
+        "parameters": [
+          {
+            "type": "string",
+            "example": "2026-02-21",
+            "description": "Calendar date (YYYY-MM-DD)",
+            "name": "date",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/energy.EnergyLevelsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request — missing or malformed date",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden — inactive user",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found — no record for this date",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Creates or overwrites the energy levels for the authenticated user on the given date. All three dimension values must be integers in [0, 10].",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "energy"
+        ],
+        "summary": "Save (upsert) energy levels for a date",
+        "parameters": [
+          {
+            "description": "Energy levels payload",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/energy.SaveEnergyLevelsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/energy.EnergyLevelsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request — validation failure",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden — inactive user",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
     "/calendar/spending": {
       "get": {
         "security": [
@@ -433,6 +559,69 @@
     }
   },
   "definitions": {
+    "energy.EnergyLevelsResponse": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "example": "2026-02-21"
+        },
+        "physical": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "mental": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "emotional": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    },
+    "energy.SaveEnergyLevelsRequest": {
+      "type": "object",
+      "required": [
+        "date",
+        "physical",
+        "mental",
+        "emotional"
+      ],
+      "properties": {
+        "date": {
+          "type": "string",
+          "example": "2026-02-21",
+          "description": "Calendar date in YYYY-MM-DD format"
+        },
+        "physical": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "mental": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "emotional": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    },
+    "energy.ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        }
+      }
+    },
     "calendar.ErrorResponse": {
       "type": "object",
       "properties": {

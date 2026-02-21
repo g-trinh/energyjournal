@@ -27,6 +27,14 @@ function formatToastDate(date: string): string {
   })
 }
 
+function formatDisplayDate(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 export default function EnergyLevelsEditPage() {
   const [date, setDate] = useState<string>(todayAsDateInputValue)
   const [physical, setPhysical] = useState<number>(DEFAULT_LEVEL)
@@ -144,11 +152,12 @@ export default function EnergyLevelsEditPage() {
 
       <Card className="energy-edit-card">
         <CardHeader className="energy-edit-card-header">
-          <h1 className="energy-edit-title">Energy Levels</h1>
-          <p className="energy-edit-subtitle">Track your Physical, Mental and Emotional energy.</p>
+          <h1 className="energy-edit-title">Edit Energy Levels</h1>
+          <p className="energy-edit-subtitle">Choose a date and record how you feel across all three dimensions</p>
         </CardHeader>
 
         <CardContent className="energy-edit-card-content">
+          <hr className="energy-edit-header-divider" aria-hidden="true" />
           <div className="energy-edit-date-section">
             <label htmlFor="energy-date" className="energy-edit-date-label">
               DATE
@@ -164,6 +173,9 @@ export default function EnergyLevelsEditPage() {
                 <rect x="3" y="4" width="14" height="13" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M6 2.8V6M14 2.8V6M3 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
+              <span className="energy-edit-date-display" aria-hidden="true">
+                {formatDisplayDate(date)}
+              </span>
               <input
                 id="energy-date"
                 type="date"
@@ -194,7 +206,7 @@ export default function EnergyLevelsEditPage() {
                 <path d="M6 10.2l2.4 2.4L14.2 7" fill="none" stroke="#f5f0e8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span className="energy-status-text-desktop">
-                Existing levels loaded for this date - adjust and save to update
+                Existing levels loaded for this date — adjust and save to update
               </span>
               <span className="energy-status-text-mobile">
                 Existing levels loaded - tap to adjust

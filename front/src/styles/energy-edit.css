@@ -3,6 +3,7 @@
   padding: var(--space-2xl) var(--space-lg);
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .energy-edit-card {
@@ -21,13 +22,8 @@
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 6px;
-  background: linear-gradient(
-    to right,
-    rgba(232, 164, 69, 0.74) 0%,
-    rgba(232, 164, 69, 0.34) 55%,
-    rgba(232, 164, 69, 0.12) 100%
-  );
+  height: 3px;
+  background: rgba(232, 164, 69, 0.15);
 }
 
 .energy-edit-card-header {
@@ -49,7 +45,13 @@
 }
 
 .energy-edit-card-content {
-  padding: 24px 28px 30px;
+  padding: 0 28px 36px;
+}
+
+.energy-edit-header-divider {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin: 0 0 24px;
 }
 
 .energy-edit-date-section {
@@ -67,37 +69,53 @@
 
 .energy-edit-date-input-wrap {
   position: relative;
-}
-
-.energy-edit-date-input {
-  width: 100%;
   min-height: 50px;
+  display: flex;
+  align-items: center;
   background: rgba(26, 24, 22, 0.65);
-  border: 1px solid rgba(160, 154, 144, 0.22);
+  border: 1px solid rgba(232, 164, 69, 0.25);
   border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  padding: 0 42px 0 44px;
   transition: border-color var(--duration-normal) var(--ease-out-expo),
     box-shadow var(--duration-normal) var(--ease-out-expo);
 }
 
-.energy-edit-date-input:hover {
-  border-color: rgba(232, 164, 69, 0.35);
+.energy-edit-date-input-wrap:hover {
+  border-color: rgba(232, 164, 69, 0.45);
 }
 
-.energy-edit-date-input:focus-visible {
+.energy-edit-date-input-wrap:focus-within {
   outline: none;
   border-color: rgba(232, 164, 69, 0.56);
   box-shadow: 0 0 0 3px rgba(232, 164, 69, 0.22);
 }
 
-.energy-edit-date-input::-webkit-calendar-picker-indicator {
-  opacity: 0;
+.energy-edit-date-display {
+  position: absolute;
+  left: 44px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.energy-edit-date-input {
   position: absolute;
   inset: 0;
   width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.energy-edit-date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
 }
 
@@ -122,7 +140,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 18px;
+  margin: 0 0 36px;
   padding: 10px 12px;
   border: 1px solid rgba(143, 165, 139, 0.25);
   border-radius: 10px;
@@ -142,7 +160,7 @@
 .energy-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 }
 
 .energy-section-header {
@@ -189,8 +207,8 @@
 
 .energy-section-divider {
   border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  margin: 4px 0 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 8px 0 36px;
 }
 
 .energy-slider {
@@ -272,7 +290,7 @@
 }
 
 .energy-edit-actions {
-  margin-top: 18px;
+  margin-top: 32px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -325,6 +343,7 @@
   text-underline-offset: 3px;
   cursor: pointer;
   width: fit-content;
+  align-self: center;
 }
 
 .energy-toast {
@@ -406,7 +425,11 @@
   }
 
   .energy-edit-card-content {
-    padding: 20px 20px 24px;
+    padding: 0 20px 28px;
+  }
+
+  .energy-edit-header-divider {
+    margin-bottom: 20px;
   }
 
   .energy-edit-title {
