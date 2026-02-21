@@ -9,13 +9,17 @@ import (
 	"strings"
 
 	"energyjournal/internal/domain/calendar"
+	"energyjournal/internal/domain/energy"
 	"energyjournal/internal/domain/user"
 	calendarhandler "energyjournal/internal/handler/calendar"
+	energyhandler "energyjournal/internal/handler/energy"
 	userhandler "energyjournal/internal/handler/user"
 	"energyjournal/internal/pkg/firebase"
 	"energyjournal/internal/pkg/firestore"
 	"energyjournal/internal/server/middleware"
 	calendarservice "energyjournal/internal/service/calendar"
+	energyservice "energyjournal/internal/service/energy"
+	energystorage "energyjournal/internal/service/energy/storage"
 	userservice "energyjournal/internal/service/user"
 	userstorage "energyjournal/internal/service/user/storage"
 )
@@ -24,6 +28,7 @@ import (
 type Dependencies struct {
 	SpendingService calendar.SpendingService
 	UserService     user.UserService
+	EnergyService   energy.EnergyService
 	AuthMiddleware  *middleware.AuthMiddleware
 }
 
@@ -55,11 +60,14 @@ func New(addr string) *http.Server {
 	activationBaseURL := lookupEnvOrDefault("FRONTEND_ACTIVATION_BASE_URL", "http://localhost:8080")
 
 	userService := userservice.NewUserService(userRepo, tokenRepo, authProvider, emailSender, activationBaseURL)
+	energyRepo := energystorage.NewEnergyRepository(firestoreClient.Client)
+	energyLevelsService := energyservice.NewEnergyService(energyRepo)
 	authMiddleware := middleware.NewAuthMiddleware(firebaseClient, userRepo)
 
 	deps := Dependencies{
 		SpendingService: calendarservice.NewSpendingService(),
 		UserService:     userService,
+		EnergyService:   energyLevelsService,
 		AuthMiddleware:  authMiddleware,
 	}
 	register(mux, deps)
@@ -113,6 +121,13 @@ func register(mux *http.ServeMux, deps Dependencies) {
 		mux.Handle("GET /users/me", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(userHandler.GetProfile)))
 		mux.Handle("PUT /users/me", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(userHandler.UpdateProfile)))
 		mux.Handle("DELETE /users/me", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(userHandler.DeleteProfile)))
+	}
+
+	// Energy routes
+	if deps.EnergyService != nil && deps.AuthMiddleware != nil {
+		energyLevelsHandler := energyhandler.New(deps.EnergyService)
+		mux.Handle("GET /energy/levels", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(energyLevelsHandler.GetLevels)))
+		mux.Handle("PUT /energy/levels", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(energyLevelsHandler.SaveLevels)))
 	}
 }
 
