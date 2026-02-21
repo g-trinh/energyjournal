@@ -18,6 +18,14 @@ function ClockIcon({ active }: { active: boolean }) {
   )
 }
 
+function EnergyIcon({ active }: { active: boolean }) {
+  return (
+    <svg className={cn('topbar-mobile-row-icon', active && 'topbar-mobile-row-icon-active')} viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M10 2.8 6 10h3l-1 7.2L14 10h-3l1.2-7.2Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function ChevronIcon() {
   return (
     <svg className="topbar-mobile-row-chevron" viewBox="0 0 20 20" aria-hidden="true">
@@ -35,6 +43,7 @@ export default function BurgerMenu({ open, onClose, triggerRef }: BurgerMenuProp
   const isAuthenticated = status === 'authenticated'
   const isAnonymous = status === 'anonymous'
   const isTimeSpendingActive = location.pathname === '/timespending' && !isAnonymous
+  const isEnergyActive = location.pathname === '/energy/levels/edit' && !isAnonymous
 
   useEffect(() => {
     if (!open) {
@@ -87,6 +96,11 @@ export default function BurgerMenu({ open, onClose, triggerRef }: BurgerMenuProp
     onClose()
   }
 
+  function navigateEnergyLevels() {
+    navigate(isAnonymous ? '/auth' : '/energy/levels/edit')
+    onClose()
+  }
+
   function navigateToAuth() {
     navigate('/auth')
     onClose()
@@ -129,6 +143,17 @@ export default function BurgerMenu({ open, onClose, triggerRef }: BurgerMenuProp
           <ClockIcon active={isTimeSpendingActive} />
           <span className={cn('topbar-mobile-row-label', isAnonymous && 'topbar-mobile-row-label-anonymous')}>
             Time Spending
+          </span>
+          <ChevronIcon />
+        </button>
+        <button
+          type="button"
+          className={cn('topbar-mobile-row', isEnergyActive && 'topbar-mobile-row-active')}
+          onClick={navigateEnergyLevels}
+        >
+          <EnergyIcon active={isEnergyActive} />
+          <span className={cn('topbar-mobile-row-label', isAnonymous && 'topbar-mobile-row-label-anonymous')}>
+            Energy Levels
           </span>
           <ChevronIcon />
         </button>

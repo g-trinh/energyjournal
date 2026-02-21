@@ -1,0 +1,21 @@
+package energy
+
+import (
+	"context"
+	"time"
+)
+
+type EnergyLevels struct {
+	UID       string
+	Date      string
+	Physical  int
+	Mental    int
+	Emotional int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type EnergyService interface {
+	GetByDate(ctx context.Context, uid, date string) (*EnergyLevels, error)
+	Save(ctx context.Context, levels EnergyLevels) error
+}
