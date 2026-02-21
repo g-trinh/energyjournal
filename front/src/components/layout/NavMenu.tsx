@@ -8,10 +8,15 @@ export default function NavMenu() {
   const { status } = useAuth()
 
   const isAnonymous = status === 'anonymous'
-  const isActive = !isAnonymous && location.pathname === '/timespending'
+  const isTimeSpendingActive = !isAnonymous && location.pathname === '/timespending'
+  const isEnergyActive = !isAnonymous && location.pathname === '/energy/levels/edit'
 
   function handleTimeSpendingClick() {
     navigate(isAnonymous ? '/auth' : '/timespending')
+  }
+
+  function handleEnergyClick() {
+    navigate(isAnonymous ? '/auth' : '/energy/levels/edit')
   }
 
   return (
@@ -22,13 +27,27 @@ export default function NavMenu() {
             type="button"
             className={cn(
               'topbar-nav-item',
-              isActive && 'topbar-nav-item-active',
+              isTimeSpendingActive && 'topbar-nav-item-active',
               isAnonymous && 'topbar-nav-item-anonymous',
             )}
-            aria-current={isActive ? 'page' : undefined}
+            aria-current={isTimeSpendingActive ? 'page' : undefined}
             onClick={handleTimeSpendingClick}
           >
             Time Spending
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            className={cn(
+              'topbar-nav-item',
+              isEnergyActive && 'topbar-nav-item-active',
+              isAnonymous && 'topbar-nav-item-anonymous',
+            )}
+            aria-current={isEnergyActive ? 'page' : undefined}
+            onClick={handleEnergyClick}
+          >
+            Energy Levels
           </button>
         </li>
       </ul>
