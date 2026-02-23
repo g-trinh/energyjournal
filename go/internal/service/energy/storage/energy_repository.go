@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"energyjournal/internal/domain/energy"
 	pkgerror "energyjournal/internal/pkg/error"
+	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -49,7 +50,39 @@ func (r *FirestoreEnergyRepository) GetByDate(ctx context.Context, uid, date str
 }
 
 func (r *FirestoreEnergyRepository) GetByDateRange(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
-	return nil, nil
+	iter := r.client.Collection(energyLevelsCollection).
+		Where("uid", "==", uid).
+		Where("date", ">=", from).
+		Where("date", "<=", to).
+		OrderBy("date", firestore.Asc).
+		Documents(ctx)
+	defer iter.Stop()
+
+	var levels []energy.EnergyLevels
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		data := doc.Data()
+		levels = append(levels, energy.EnergyLevels{
+			UID:       getString(data, "uid"),
+			Date:      getString(data, "date"),
+			Physical:  getInt(data, "physical"),
+			Mental:    getInt(data, "mental"),
+			Emotional: getInt(data, "emotional"),
+			CreatedAt: getTimestamp(data, "createdAt"),
+			UpdatedAt: getTimestamp(data, "updatedAt"),
+		})
+	}
+
+	if levels == nil {
+		return []energy.EnergyLevels{}, nil
+	}
+	return levels, nil
 }
 
 func (r *FirestoreEnergyRepository) Upsert(ctx context.Context, levels energy.EnergyLevels) error {
