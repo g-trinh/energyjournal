@@ -1,20 +1,39 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import EnergyTooltip from '@/components/energy/EnergyTooltip'
+import { ENERGY_COLORS, ENERGY_LABELS, type EnergyDimension } from '@/lib/energyColors'
 import { getIdToken } from '@/lib/session'
 import {
   addDays,
   daysBetween,
   formatDisplayDate,
+  getDaysBetween,
   getEnergyLevelsRange,
   type EnergyLevels,
 } from '@/services/energyLevels'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import '../App.css'
 import '@/styles/energy-levels.css'
 
 type Preset = '7d' | '14d' | '30d' | 'custom'
 
 type PageStatus = 'idle' | 'loading' | 'success' | 'error' | 'empty'
+
+interface ChartPoint {
+  date: string
+  physical: number | null
+  mental: number | null
+  emotional: number | null
+}
 
 const PRESET_OFFSETS: Record<Exclude<Preset, 'custom'>, number> = {
   '7d': 6,
@@ -26,6 +45,48 @@ function todayAsDateInputValue(): string {
   return new Date().toLocaleDateString('en-CA')
 }
 
+function formatShortDate(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatRangeLabel(from: string, to: string): string {
+  const fromDate = new Date(`${from}T00:00:00`)
+  const toDate = new Date(`${to}T00:00:00`)
+  const fromLabel = formatShortDate(from)
+  const toLabel = toDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+  if (fromDate.getFullYear() !== toDate.getFullYear()) {
+    const fromWithYear = fromDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    return `${fromWithYear} - ${toLabel}`
+  }
+
+  return `${fromLabel} - ${toLabel}`
+}
+
+export function buildChartData(levels: EnergyLevels[], from: string, to: string): ChartPoint[] {
+  if (!from || !to) {
+    return []
+  }
+  const map = new Map(levels.map((level) => [level.date, level]))
+  return getDaysBetween(from, to).map((date) => ({
+    date,
+    physical: map.get(date)?.physical ?? null,
+    mental: map.get(date)?.mental ?? null,
+    emotional: map.get(date)?.emotional ?? null,
+  }))
+}
+
 export default function EnergyLevelsPage() {
   const today = useMemo(() => todayAsDateInputValue(), [])
   const [from, setFrom] = useState<string>(() => addDays(today, -13))
@@ -34,7 +95,36 @@ export default function EnergyLevelsPage() {
   const [levels, setLevels] = useState<EnergyLevels[]>([])
   const [status, setStatus] = useState<PageStatus>('idle')
   const [clampWarning, setClampWarning] = useState<boolean>(false)
+  const [hiddenLines, setHiddenLines] = useState<Set<EnergyDimension>>(new Set())
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || !('matchMedia' in window)) {
+      return false
+    }
+    return window.matchMedia('(max-width: 768px)').matches
+  })
   const fetchAbortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('matchMedia' in window)) {
+      return undefined
+    }
+
+    const media = window.matchMedia('(max-width: 768px)')
+    const handler = (event: MediaQueryListEvent) => setIsMobile(event.matches)
+    if ('addEventListener' in media) {
+      media.addEventListener('change', handler)
+    } else {
+      media.addListener(handler)
+    }
+
+    return () => {
+      if ('removeEventListener' in media) {
+        media.removeEventListener('change', handler)
+      } else {
+        media.removeListener(handler)
+      }
+    }
+  }, [])
 
   const loadRange = useCallback(async (nextFrom: string, nextTo: string) => {
     const token = getIdToken()
@@ -79,6 +169,22 @@ export default function EnergyLevelsPage() {
     }
   }, [from, to, loadRange])
 
+  const chartData = useMemo(
+    () => buildChartData(levels, from, to),
+    [levels, from, to],
+  )
+  const dayCount = from && to ? Math.max(daysBetween(from, to) + 1, 1) : 0
+  const chartSubtitle = from && to
+    ? `${formatRangeLabel(from, to)} · ${dayCount} days`
+    : ''
+  const tickInterval = useMemo(() => {
+    if (chartData.length === 0) {
+      return 0
+    }
+    const targetTicks = isMobile ? 4 : 7
+    return Math.max(Math.ceil(chartData.length / targetTicks) - 1, 0)
+  }, [chartData.length, isMobile])
+
   function applyPreset(value: Exclude<Preset, 'custom'>) {
     const nextTo = todayAsDateInputValue()
     const nextFrom = addDays(nextTo, -PRESET_OFFSETS[value])
@@ -113,7 +219,22 @@ export default function EnergyLevelsPage() {
     setPreset('custom')
   }
 
+  function toggleLine(dimension: EnergyDimension) {
+    setHiddenLines((prev) => {
+      const next = new Set(prev)
+      if (next.has(dimension)) {
+        next.delete(dimension)
+      } else {
+        next.add(dimension)
+      }
+      return next
+    })
+  }
+
   const isLoading = status === 'loading'
+  const showChart = status === 'success'
+  const showEmpty = status === 'empty'
+  const showError = status === 'error'
 
   return (
     <main className="app energy-levels-page">
@@ -270,11 +391,13 @@ export default function EnergyLevelsPage() {
           <CardHeader className="energy-levels-chart-header">
             <div>
               <h2>Your Energy Trends</h2>
-              <p className="energy-levels-chart-subtitle">Select a date range to view your trends.</p>
+              <p className="energy-levels-chart-subtitle">
+                {chartSubtitle || 'Select a date range to view your trends.'}
+              </p>
             </div>
           </CardHeader>
           <CardContent className="energy-levels-chart-body">
-            {status === 'loading' && (
+            {(isLoading || status === 'idle') && (
               <div className="loading-state">
                 <div className="loading-spinner" aria-hidden="true">
                   <div className="spinner-ring" />
@@ -284,10 +407,111 @@ export default function EnergyLevelsPage() {
                 <p>Gathering your energy data...</p>
               </div>
             )}
-            {status !== 'loading' && (
-              <div className="energy-levels-chart-placeholder">
-                Chart will render here.
+
+            {showError && (
+              <div className="error-state" role="alert">
+                <svg className="error-icon" width="32" height="32" viewBox="0 0 20 20" aria-hidden="true">
+                  <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                  <path d="M10 6v5M10 14v.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+                <p className="error-message">Unable to load data</p>
+                <p className="error-detail">Please check your connection and try again.</p>
+                <button type="button" className="retry-btn" onClick={() => void loadRange(from, to)}>
+                  Try again
+                </button>
               </div>
+            )}
+
+            {showEmpty && (
+              <div className="empty-state">
+                <svg className="empty-icon" width="36" height="36" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M4 10h12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="1.4" />
+                </svg>
+                <p className="empty-title">No entries yet</p>
+                <p className="empty-subtitle">Start tracking your energy to see your trends here.</p>
+                <Link to="/energy/levels/edit" className="energy-levels-empty-cta">
+                  Track Today
+                </Link>
+              </div>
+            )}
+
+            {showChart && (
+              <>
+                <div className="energy-levels-chart-wrapper">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 8, right: 16, left: -12, bottom: 0 }}>
+                      <CartesianGrid vertical={false} stroke="#a09a90" strokeOpacity={0.06} />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={formatShortDate}
+                        interval={tickInterval}
+                        tick={{ fill: '#a09a90', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        domain={[0, 10]}
+                        ticks={[0, 2, 4, 6, 8, 10]}
+                        tick={{ fill: '#a09a90', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip content={<EnergyTooltip />} />
+                      <Line
+                        dataKey="physical"
+                        stroke={ENERGY_COLORS.physical}
+                        strokeWidth={2.5}
+                        connectNulls={false}
+                        hide={hiddenLines.has('physical')}
+                        dot={false}
+                        activeDot={{ r: 5, stroke: '#26231e', strokeWidth: 2 }}
+                      />
+                      <Line
+                        dataKey="mental"
+                        stroke={ENERGY_COLORS.mental}
+                        strokeWidth={2.5}
+                        connectNulls={false}
+                        hide={hiddenLines.has('mental')}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line
+                        dataKey="emotional"
+                        stroke={ENERGY_COLORS.emotional}
+                        strokeWidth={2.5}
+                        connectNulls={false}
+                        hide={hiddenLines.has('emotional')}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="energy-levels-legend" role="group" aria-label="Toggle energy dimensions">
+                  {(Object.keys(ENERGY_COLORS) as EnergyDimension[]).map((dimension) => {
+                    const isHidden = hiddenLines.has(dimension)
+                    return (
+                      <button
+                        key={dimension}
+                        type="button"
+                        className="energy-levels-legend-btn"
+                        aria-pressed={isHidden}
+                        aria-label={`Toggle ${ENERGY_LABELS[dimension]} line`}
+                        onClick={() => toggleLine(dimension)}
+                        style={{ opacity: isHidden ? 0.3 : 1 }}
+                      >
+                        <span
+                          className="energy-levels-legend-dot"
+                          style={{ backgroundColor: ENERGY_COLORS[dimension] }}
+                          aria-hidden="true"
+                        />
+                        {ENERGY_LABELS[dimension]}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

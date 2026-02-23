@@ -235,11 +235,117 @@
   padding: var(--space-lg) var(--space-xl) var(--space-xl);
 }
 
+.energy-levels-chart-wrapper {
+  height: 360px;
+}
+
+.energy-levels-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.energy-levels-legend-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 150ms ease, border-color var(--duration-normal) var(--ease-out-expo);
+}
+
+.energy-levels-legend-btn:hover {
+  border-color: var(--color-border-hover);
+}
+
+.energy-levels-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
 .energy-levels-chart-placeholder {
   color: var(--color-text-muted);
   font-size: 0.85rem;
   text-align: center;
   padding: var(--space-xl) 0;
+}
+
+.energy-levels-empty-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-sm);
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--color-accent-amber) 0%, #d4923d 100%);
+  color: var(--color-bg-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.energy-levels-tooltip {
+  background: #1a1816;
+  border: 1px solid rgba(232, 164, 69, 0.4);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+.energy-levels-tooltip-title {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.energy-levels-tooltip-divider {
+  height: 1px;
+  background: rgba(232, 164, 69, 0.2);
+  margin-bottom: 6px;
+}
+
+.energy-levels-tooltip-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.energy-levels-tooltip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.energy-levels-tooltip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+}
+
+.energy-levels-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.energy-levels-tooltip-value {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--color-text-primary);
 }
 
 .energy-levels-sticky-cta {
@@ -305,6 +411,10 @@
 
   .energy-levels-chart-body {
     padding: var(--space-lg);
+  }
+
+  .energy-levels-chart-wrapper {
+    height: 280px;
   }
 
   .energy-levels-sticky-cta {
