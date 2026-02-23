@@ -5,6 +5,7 @@ import AnonymousOnlyRoute from './components/routing/AnonymousOnlyRoute'
 import ProtectedRoute from './components/routing/ProtectedRoute'
 import ActivatePage from './pages/ActivatePage'
 import AuthPage from './pages/AuthPage'
+import EnergyLevelsEditPage from './pages/EnergyLevelsEditPage'
 import LandingPage from './pages/LandingPage'
 
 export default function AppRouter() {
@@ -17,6 +18,14 @@ export default function AppRouter() {
           element={
             <ProtectedRoute>
               <App />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/energy/levels/edit"
+          element={
+            <ProtectedRoute>
+              <EnergyLevelsEditPage />
             </ProtectedRoute>
           }
         />
