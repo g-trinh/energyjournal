@@ -23,6 +23,10 @@ vi.mock('./pages/EnergyLevelsEditPage', () => ({
   default: () => <h1>Energy Levels Page</h1>,
 }))
 
+vi.mock('./pages/EnergyLevelsPage', () => ({
+  default: () => <h1>Energy Levels Chart Page</h1>,
+}))
+
 describe('AppRouter route access', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -64,7 +68,7 @@ describe('AppRouter route access', () => {
   })
 
   it('redirects anonymous users from protected routes to /auth', async () => {
-    const protectedCases = ['/timespending', '/energy/levels/edit']
+    const protectedCases = ['/timespending', '/energy/levels', '/energy/levels/edit']
 
     for (const path of protectedCases) {
       const { unmount } = render(
@@ -88,6 +92,7 @@ describe('AppRouter route access', () => {
 
     const protectedCases = [
       { path: '/timespending', expected: 'Timespending Page' },
+      { path: '/energy/levels', expected: 'Energy Levels Chart Page' },
       { path: '/energy/levels/edit', expected: 'Energy Levels Page' },
     ]
 

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import { ENERGY_COLORS } from '@/lib/energyColors'
 import '../App.css'
 import '@/styles/landing.css'
 
@@ -60,9 +61,9 @@ export default function LandingPage() {
                   axisLine={false}
                   tickLine={false}
                 />
-                <Line type="monotone" dataKey="physical" stroke="#c4826d" dot={false} activeDot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="mental" stroke="#7eb8b3" dot={false} activeDot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="emotional" stroke="#8fa58b" dot={false} activeDot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="physical" stroke={ENERGY_COLORS.physical} dot={false} activeDot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="mental" stroke={ENERGY_COLORS.mental} dot={false} activeDot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="emotional" stroke={ENERGY_COLORS.emotional} dot={false} activeDot={false} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>

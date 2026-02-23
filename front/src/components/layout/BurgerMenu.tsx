@@ -43,7 +43,7 @@ export default function BurgerMenu({ open, onClose, triggerRef }: BurgerMenuProp
   const isAuthenticated = status === 'authenticated'
   const isAnonymous = status === 'anonymous'
   const isTimeSpendingActive = location.pathname === '/timespending' && !isAnonymous
-  const isEnergyActive = location.pathname === '/energy/levels/edit' && !isAnonymous
+  const isEnergyActive = location.pathname.startsWith('/energy/levels') && !isAnonymous
 
   useEffect(() => {
     if (!open) {
@@ -97,7 +97,7 @@ export default function BurgerMenu({ open, onClose, triggerRef }: BurgerMenuProp
   }
 
   function navigateEnergyLevels() {
-    navigate(isAnonymous ? '/auth' : '/energy/levels/edit')
+    navigate(isAnonymous ? '/auth' : '/energy/levels')
     onClose()
   }
 

@@ -38,6 +38,25 @@ func (s *service) GetByDate(ctx context.Context, uid, date string) (*domain.Ener
 	return s.repo.GetByDate(ctx, uid, date)
 }
 
+func (s *service) GetByDateRange(ctx context.Context, uid, from, to string) ([]domain.EnergyLevels, error) {
+	fromDate, fromOK := parseDate(from)
+	toDate, toOK := parseDate(to)
+	if !fromOK || !toOK || toDate.Before(fromDate) {
+		toDate = s.timeNow()
+		fromDate = toDate.AddDate(0, 0, -6)
+	}
+
+	from = fromDate.Format("2006-01-02")
+	to = toDate.Format("2006-01-02")
+
+	if int(toDate.Sub(fromDate).Hours()/24) > 30 {
+		toDate = fromDate.AddDate(0, 0, 30)
+		to = toDate.Format("2006-01-02")
+	}
+
+	return s.repo.GetByDateRange(ctx, uid, from, to)
+}
+
 func (s *service) Save(ctx context.Context, levels domain.EnergyLevels) error {
 	if err := validateDate(levels.Date); err != nil {
 		return err
@@ -58,15 +77,34 @@ func (s *service) Save(ctx context.Context, levels domain.EnergyLevels) error {
 }
 
 func validateDate(date string) error {
+	return validateDateField("date", date)
+}
+
+func validateDateField(field, date string) error {
+	if date == "" {
+		return pkgerror.NewInputValidationError(field, "is required")
+	}
+
 	if !datePattern.MatchString(date) {
-		return pkgerror.NewInputValidationError("date", "invalid date format, expected YYYY-MM-DD")
+		return pkgerror.NewInputValidationError(field, "invalid date format, expected YYYY-MM-DD")
 	}
 
 	if _, err := time.Parse("2006-01-02", date); err != nil {
-		return pkgerror.NewInputValidationError("date", "invalid date")
+		return pkgerror.NewInputValidationError(field, "invalid date")
 	}
 
 	return nil
+}
+
+func parseDate(date string) (time.Time, bool) {
+	if date == "" || !datePattern.MatchString(date) {
+		return time.Time{}, false
+	}
+	parsed, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return time.Time{}, false
+	}
+	return parsed, true
 }
 
 func validateLevel(field string, value int) error {

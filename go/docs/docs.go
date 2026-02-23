@@ -15,35 +15,22 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/calendar/spending": {
+        "/energy/levels": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns spending totals by category between two dates (inclusive).",
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
-                    "calendar"
+                    "energy"
                 ],
-                "summary": "Get spending aggregates",
+                "summary": "Get energy levels for a specific date",
                 "parameters": [
                     {
                         "type": "string",
-                        "example": "2026-01-01",
-                        "description": "Start date (YYYY-MM-DD)",
-                        "name": "start",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "example": "2026-01-31",
-                        "description": "End date (YYYY-MM-DD)",
-                        "name": "end",
+                        "description": "Date (YYYY-MM-DD)",
+                        "name": "date",
                         "in": "query",
                         "required": true
                     }
@@ -52,233 +39,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/calendar.SpendingResponse"
+                            "$ref": "#/definitions/energy.EnergyLevelsResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/calendar.ErrorResponse"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/calendar.ErrorResponse"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/calendar.ErrorResponse"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/calendar.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/healthz": {
-            "get": {
-                "description": "Returns service liveness status.",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Health check",
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/users": {
-            "post": {
-                "description": "Creates a new user account.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Create user",
-                "parameters": [
-                    {
-                        "description": "Create user payload",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.CreateUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/user.UserResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/activate": {
-            "post": {
-                "description": "Activates a pending user account using an activation token.",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Activate user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Activation token",
-                        "name": "token",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/login": {
-            "post": {
-                "description": "Authenticates a user and returns Firebase auth tokens.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Login user",
-                "parameters": [
-                    {
-                        "description": "Login payload",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.AuthTokensResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/me": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns the authenticated and active user's profile.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get current user profile",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.UserResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     }
                 }
@@ -289,7 +74,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates the authenticated and active user's profile fields.",
                 "consumes": [
                     "application/json"
                 ],
@@ -297,17 +81,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "energy"
                 ],
-                "summary": "Update current user profile",
+                "summary": "Save energy levels for a specific date",
                 "parameters": [
                     {
-                        "description": "Update user payload",
-                        "name": "request",
+                        "description": "Energy levels data",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.UpdateUserRequest"
+                            "$ref": "#/definitions/energy.SaveEnergyLevelsRequest"
                         }
                     }
                 ],
@@ -315,118 +99,98 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.UserResponse"
+                            "$ref": "#/definitions/energy.EnergyLevelsResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Soft-deletes the authenticated and active user.",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Delete current user profile",
-                "responses": {
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/users/refresh": {
-            "post": {
-                "description": "Exchanges a refresh token for a new Firebase ID token pair.",
-                "consumes": [
-                    "application/json"
+        "/energy/levels/range": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
                 ],
-                "produces": [
-                    "application/json"
-                ],
+                "description": "Returns all energy levels recorded between from and to (inclusive). Dates with no record are omitted. Max range is 30 days (silently clamped).",
                 "tags": [
-                    "users"
+                    "energy"
                 ],
-                "summary": "Refresh auth token",
+                "summary": "Get energy levels for a date range",
                 "parameters": [
                     {
-                        "description": "Refresh token payload",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.RefreshRequest"
-                        }
+                        "type": "string",
+                        "example": "2026-02-09",
+                        "description": "Start date (YYYY-MM-DD, inclusive)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2026-02-23",
+                        "description": "End date (YYYY-MM-DD, inclusive)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.AuthTokensResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/energy.EnergyLevelsResponse"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/energy.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/energy.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/energy.ErrorResponse"
                         }
                     }
                 }
@@ -434,7 +198,24 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "calendar.ErrorResponse": {
+        "energy.EnergyLevelsResponse": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "emotional": {
+                    "type": "integer"
+                },
+                "mental": {
+                    "type": "integer"
+                },
+                "physical": {
+                    "type": "integer"
+                }
+            }
+        },
+        "energy.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -442,102 +223,20 @@ const docTemplate = `{
                 }
             }
         },
-        "calendar.SpendingResponse": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "number"
-            }
-        },
-        "user.AuthTokensResponse": {
+        "energy.SaveEnergyLevelsRequest": {
             "type": "object",
             "properties": {
-                "expiresIn": {
+                "date": {
                     "type": "string"
                 },
-                "idToken": {
-                    "type": "string"
+                "emotional": {
+                    "type": "integer"
                 },
-                "refreshToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.CreateUserRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
+                "mental": {
+                    "type": "integer"
                 },
-                "firstname": {
-                    "type": "string"
-                },
-                "lastname": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "timezone": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.RefreshRequest": {
-            "type": "object",
-            "properties": {
-                "refreshToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.UpdateUserRequest": {
-            "type": "object",
-            "properties": {
-                "firstname": {
-                    "type": "string"
-                },
-                "lastname": {
-                    "type": "string"
-                },
-                "timezone": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.UserResponse": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "firstname": {
-                    "type": "string"
-                },
-                "lastname": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "timezone": {
-                    "type": "string"
-                },
-                "uid": {
-                    "type": "string"
+                "physical": {
+                    "type": "integer"
                 }
             }
         }
@@ -558,7 +257,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Energy Journal API",
-	Description:      "HTTP API for user management and calendar spending data.",
+	Description:      "HTTP API for tracking energy levels across physical, mental, and emotional dimensions.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

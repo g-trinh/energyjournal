@@ -33,13 +33,21 @@ func (v *stubVerifier) VerifyIDToken(ctx context.Context, idToken string) (*auth
 }
 
 type stubEnergyService struct {
-	getByDate func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)
-	save      func(ctx context.Context, levels energy.EnergyLevels) error
+	getByDate      func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)
+	getByDateRange func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error)
+	save           func(ctx context.Context, levels energy.EnergyLevels) error
 }
 
 func (s *stubEnergyService) GetByDate(ctx context.Context, uid, date string) (*energy.EnergyLevels, error) {
 	if s.getByDate != nil {
 		return s.getByDate(ctx, uid, date)
+	}
+	return nil, nil
+}
+
+func (s *stubEnergyService) GetByDateRange(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+	if s.getByDateRange != nil {
+		return s.getByDateRange(ctx, uid, from, to)
 	}
 	return nil, nil
 }
@@ -187,6 +195,34 @@ func TestRegister_EnergyLevels_UnauthorizedWithoutToken_GET(t *testing.T) {
 	}
 }
 
+func TestRegister_EnergyLevelsRange_UnauthorizedWithoutToken_GET(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	register(mux, Dependencies{
+		EnergyService: &stubEnergyService{
+			getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+				t.Fatal("energy service should not be called")
+				return nil, nil
+			},
+		},
+		AuthMiddleware: middleware.NewAuthMiddlewareWithVerifier(&stubVerifier{
+			verifyIDToken: func(ctx context.Context, idToken string) (*auth.Token, error) {
+				t.Fatal("token verifier should not be called")
+				return nil, nil
+			},
+		}, nil),
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/energy/levels/range?from=2026-02-20&to=2026-02-21", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rr.Code)
+	}
+}
+
 func TestRegister_EnergyLevels_UnauthorizedWithoutToken_PUT(t *testing.T) {
 	t.Parallel()
 
@@ -244,6 +280,37 @@ func TestRegister_EnergyLevels_AuthorizedWithToken_GET(t *testing.T) {
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/energy/levels?date=2026-02-21", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+}
+
+func TestRegister_EnergyLevelsRange_AuthorizedWithToken_GET(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	register(mux, Dependencies{
+		EnergyService: &stubEnergyService{
+			getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+				return []energy.EnergyLevels{}, nil
+			},
+		},
+		AuthMiddleware: middleware.NewAuthMiddlewareWithVerifier(&stubVerifier{
+			verifyIDToken: func(ctx context.Context, idToken string) (*auth.Token, error) {
+				return &auth.Token{UID: "uid-1"}, nil
+			},
+		}, &stubUserRepo{
+			getByUID: func(ctx context.Context, uid string) (*user.User, error) {
+				return &user.User{UID: uid, Status: user.StatusActive}, nil
+			},
+		}),
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/energy/levels/range?from=2026-02-20&to=2026-02-21", nil)
 	req.Header.Set("Authorization", "Bearer valid-token")
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
