@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getIdToken } from '@/lib/session'
 import {
+  formatDisplayDate,
   getEnergyLevels,
   saveEnergyLevels,
   type EnergyLevels,
@@ -22,14 +23,6 @@ function todayAsDateInputValue(): string {
 function formatToastDate(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
-function formatDisplayDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
-    month: 'long',
     day: 'numeric',
     year: 'numeric',
   })
