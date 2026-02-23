@@ -1,9 +1,159 @@
 basePath: /
+definitions:
+  energy.EnergyLevelsResponse:
+    properties:
+      date:
+        type: string
+      emotional:
+        type: integer
+      mental:
+        type: integer
+      physical:
+        type: integer
+    type: object
+  energy.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  energy.SaveEnergyLevelsRequest:
+    properties:
+      date:
+        type: string
+      emotional:
+        type: integer
+      mental:
+        type: integer
+      physical:
+        type: integer
+    type: object
 info:
   contact: {}
-  description: HTTP API for creating groups, adding gifters, and running a Secret
-    Santa draw.
-  title: Secret Santa API
+  description: HTTP API for tracking energy levels across physical, mental, and emotional
+    dimensions.
+  title: Energy Journal API
   version: "1.0"
-paths: {}
+paths:
+  /energy/levels:
+    get:
+      parameters:
+      - description: Date (YYYY-MM-DD)
+        in: query
+        name: date
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/energy.EnergyLevelsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get energy levels for a specific date
+      tags:
+      - energy
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Energy levels data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/energy.SaveEnergyLevelsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/energy.EnergyLevelsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Save energy levels for a specific date
+      tags:
+      - energy
+  /energy/levels/range:
+    get:
+      description: Returns all energy levels recorded between from and to (inclusive).
+        Dates with no record are omitted. Max range is 30 days (silently clamped).
+      parameters:
+      - description: Start date (YYYY-MM-DD, inclusive)
+        example: "2026-02-09"
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: End date (YYYY-MM-DD, inclusive)
+        example: "2026-02-23"
+        in: query
+        name: to
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/energy.EnergyLevelsResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get energy levels for a date range
+      tags:
+      - energy
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -49,6 +49,9 @@ func (r *FirestoreEnergyRepository) GetByDate(ctx context.Context, uid, date str
 	}, nil
 }
 
+// GetByDateRange returns energy levels for uid between from and to (inclusive), ordered by date ASC.
+// Requires a Firestore composite index on energy_levels: uid ASC + date ASC.
+// Create it manually in the Firebase console before deploying this method.
 func (r *FirestoreEnergyRepository) GetByDateRange(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
 	iter := r.client.Collection(energyLevelsCollection).
 		Where("uid", "==", uid).

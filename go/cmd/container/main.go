@@ -10,10 +10,13 @@ import (
 	"energyjournal/internal/server"
 )
 
-// @title Secret Santa API
+// @title Energy Journal API
 // @version 1.0
-// @description HTTP API for creating groups, adding gifters, and running a Secret Santa draw.
+// @description HTTP API for tracking energy levels across physical, mental, and emotional dimensions.
 // @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
 	// Wire real services into the server here once implementations exist.

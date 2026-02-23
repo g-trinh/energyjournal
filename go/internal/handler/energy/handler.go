@@ -18,6 +18,17 @@ func New(service energy.EnergyService) *EnergyHandler {
 	return &EnergyHandler{service: service}
 }
 
+// GetLevels godoc
+// @Summary Get energy levels for a specific date
+// @Tags energy
+// @Security BearerAuth
+// @Param date query string true "Date (YYYY-MM-DD)"
+// @Success 200 {object} energy.EnergyLevelsResponse
+// @Failure 400 {object} energy.ErrorResponse
+// @Failure 401 {object} energy.ErrorResponse
+// @Failure 404 {object} energy.ErrorResponse
+// @Failure 500 {object} energy.ErrorResponse
+// @Router /energy/levels [get]
 func (h *EnergyHandler) GetLevels(w http.ResponseWriter, r *http.Request) {
 	u, ok := middleware.UserFromContext(r.Context())
 	if !ok {
@@ -45,6 +56,19 @@ func (h *EnergyHandler) GetLevels(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetLevelsByRange godoc
+// @Summary Get energy levels for a date range
+// @Description Returns all energy levels recorded between from and to (inclusive). Dates with no record are omitted. Max range is 30 days (silently clamped).
+// @Tags energy
+// @Security BearerAuth
+// @Param from query string true "Start date (YYYY-MM-DD, inclusive)" example(2026-02-09)
+// @Param to query string true "End date (YYYY-MM-DD, inclusive)" example(2026-02-23)
+// @Success 200 {array} energy.EnergyLevelsResponse
+// @Failure 400 {object} energy.ErrorResponse
+// @Failure 401 {object} energy.ErrorResponse
+// @Failure 403 {object} energy.ErrorResponse
+// @Failure 500 {object} energy.ErrorResponse
+// @Router /energy/levels/range [get]
 func (h *EnergyHandler) GetLevelsByRange(w http.ResponseWriter, r *http.Request) {
 	u, ok := middleware.UserFromContext(r.Context())
 	if !ok {
@@ -83,6 +107,19 @@ func (h *EnergyHandler) GetLevelsByRange(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, EnergyLevelsRangeResponse(response))
 }
 
+// SaveLevels godoc
+// @Summary Save energy levels for a specific date
+// @Tags energy
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body energy.SaveEnergyLevelsRequest true "Energy levels data"
+// @Success 200 {object} energy.EnergyLevelsResponse
+// @Failure 400 {object} energy.ErrorResponse
+// @Failure 401 {object} energy.ErrorResponse
+// @Failure 403 {object} energy.ErrorResponse
+// @Failure 500 {object} energy.ErrorResponse
+// @Router /energy/levels [put]
 func (h *EnergyHandler) SaveLevels(w http.ResponseWriter, r *http.Request) {
 	u, ok := middleware.UserFromContext(r.Context())
 	if !ok {
