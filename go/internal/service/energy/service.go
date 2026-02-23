@@ -38,6 +38,10 @@ func (s *service) GetByDate(ctx context.Context, uid, date string) (*domain.Ener
 	return s.repo.GetByDate(ctx, uid, date)
 }
 
+func (s *service) GetByDateRange(ctx context.Context, uid, from, to string) ([]domain.EnergyLevels, error) {
+	return s.repo.GetByDateRange(ctx, uid, from, to)
+}
+
 func (s *service) Save(ctx context.Context, levels domain.EnergyLevels) error {
 	if err := validateDate(levels.Date); err != nil {
 		return err

@@ -33,13 +33,21 @@ func (v *stubVerifier) VerifyIDToken(ctx context.Context, idToken string) (*auth
 }
 
 type stubEnergyService struct {
-	getByDate func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)
-	save      func(ctx context.Context, levels energy.EnergyLevels) error
+	getByDate      func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)
+	getByDateRange func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error)
+	save           func(ctx context.Context, levels energy.EnergyLevels) error
 }
 
 func (s *stubEnergyService) GetByDate(ctx context.Context, uid, date string) (*energy.EnergyLevels, error) {
 	if s.getByDate != nil {
 		return s.getByDate(ctx, uid, date)
+	}
+	return nil, nil
+}
+
+func (s *stubEnergyService) GetByDateRange(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+	if s.getByDateRange != nil {
+		return s.getByDateRange(ctx, uid, from, to)
 	}
 	return nil, nil
 }

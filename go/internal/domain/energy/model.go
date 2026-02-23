@@ -17,5 +17,6 @@ type EnergyLevels struct {
 
 type EnergyService interface {
 	GetByDate(ctx context.Context, uid, date string) (*EnergyLevels, error)
+	GetByDateRange(ctx context.Context, uid, from, to string) ([]EnergyLevels, error)
 	Save(ctx context.Context, levels EnergyLevels) error
 }

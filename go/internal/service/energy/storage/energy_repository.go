@@ -48,6 +48,10 @@ func (r *FirestoreEnergyRepository) GetByDate(ctx context.Context, uid, date str
 	}, nil
 }
 
+func (r *FirestoreEnergyRepository) GetByDateRange(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+	return nil, nil
+}
+
 func (r *FirestoreEnergyRepository) Upsert(ctx context.Context, levels energy.EnergyLevels) error {
 	docID := energyLevelDocID(levels.UID, levels.Date)
 	docRef := r.client.Collection(energyLevelsCollection).Doc(docID)

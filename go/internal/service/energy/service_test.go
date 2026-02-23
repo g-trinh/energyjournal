@@ -153,14 +153,22 @@ func TestService_Save_PropagatesRepositoryErrors(t *testing.T) {
 }
 
 type mockEnergyRepository struct {
-	getByDate func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)
-	upsert    func(ctx context.Context, levels energy.EnergyLevels) error
-	lastSaved *energy.EnergyLevels
+	getByDate      func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)
+	getByDateRange func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error)
+	upsert         func(ctx context.Context, levels energy.EnergyLevels) error
+	lastSaved      *energy.EnergyLevels
 }
 
 func (m *mockEnergyRepository) GetByDate(ctx context.Context, uid, date string) (*energy.EnergyLevels, error) {
 	if m.getByDate != nil {
 		return m.getByDate(ctx, uid, date)
+	}
+	return nil, nil
+}
+
+func (m *mockEnergyRepository) GetByDateRange(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+	if m.getByDateRange != nil {
+		return m.getByDateRange(ctx, uid, from, to)
 	}
 	return nil, nil
 }
