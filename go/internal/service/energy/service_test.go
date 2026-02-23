@@ -52,105 +52,63 @@ func TestService_GetByDate_InvalidDateReturnsValidationError(t *testing.T) {
 	}
 }
 
-func TestService_GetByDateRange_MissingFrom(t *testing.T) {
+func TestService_GetByDateRange_MissingFromDefaultsToLastSevenDays(t *testing.T) {
 	t.Parallel()
 
-	repo := &mockEnergyRepository{}
-	svc := NewEnergyService(repo)
+	now := time.Date(2026, 2, 23, 12, 0, 0, 0, time.UTC)
+	repo := &mockEnergyRepository{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if from != "2026-02-17" || to != "2026-02-23" {
+				t.Fatalf("unexpected default range: %s to %s", from, to)
+			}
+			return []energy.EnergyLevels{}, nil
+		},
+	}
+	svc := newServiceWithClock(repo, func() time.Time { return now })
 
 	_, err := svc.GetByDateRange(context.Background(), "uid-1", "", "2026-02-21")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-
-	var validationErr *pkgerror.InputValidationError
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected InputValidationError, got %T", err)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
 	}
 }
 
-func TestService_GetByDateRange_MissingTo(t *testing.T) {
+func TestService_GetByDateRange_InvalidDateDefaultsToLastSevenDays(t *testing.T) {
 	t.Parallel()
 
-	repo := &mockEnergyRepository{}
-	svc := NewEnergyService(repo)
-
-	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-21", "")
-	if err == nil {
-		t.Fatal("expected error, got nil")
+	now := time.Date(2026, 2, 23, 12, 0, 0, 0, time.UTC)
+	repo := &mockEnergyRepository{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if from != "2026-02-17" || to != "2026-02-23" {
+				t.Fatalf("unexpected default range: %s to %s", from, to)
+			}
+			return []energy.EnergyLevels{}, nil
+		},
 	}
+	svc := newServiceWithClock(repo, func() time.Time { return now })
 
-	var validationErr *pkgerror.InputValidationError
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected InputValidationError, got %T", err)
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-22", "bad-date")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
 	}
 }
 
-func TestService_GetByDateRange_MalformedFrom(t *testing.T) {
+func TestService_GetByDateRange_FromAfterToDefaultsToLastSevenDays(t *testing.T) {
 	t.Parallel()
 
-	repo := &mockEnergyRepository{}
-	svc := NewEnergyService(repo)
-
-	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026/02/01", "2026-02-21")
-	if err == nil {
-		t.Fatal("expected error, got nil")
+	now := time.Date(2026, 2, 23, 12, 0, 0, 0, time.UTC)
+	repo := &mockEnergyRepository{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if from != "2026-02-17" || to != "2026-02-23" {
+				t.Fatalf("unexpected default range: %s to %s", from, to)
+			}
+			return []energy.EnergyLevels{}, nil
+		},
 	}
-
-	var validationErr *pkgerror.InputValidationError
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected InputValidationError, got %T", err)
-	}
-}
-
-func TestService_GetByDateRange_MalformedTo(t *testing.T) {
-	t.Parallel()
-
-	repo := &mockEnergyRepository{}
-	svc := NewEnergyService(repo)
-
-	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-01", "abc")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-
-	var validationErr *pkgerror.InputValidationError
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected InputValidationError, got %T", err)
-	}
-}
-
-func TestService_GetByDateRange_InvalidCalendar(t *testing.T) {
-	t.Parallel()
-
-	repo := &mockEnergyRepository{}
-	svc := NewEnergyService(repo)
-
-	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-13-01", "2026-02-21")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-
-	var validationErr *pkgerror.InputValidationError
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected InputValidationError, got %T", err)
-	}
-}
-
-func TestService_GetByDateRange_FromAfterTo(t *testing.T) {
-	t.Parallel()
-
-	repo := &mockEnergyRepository{}
-	svc := NewEnergyService(repo)
+	svc := newServiceWithClock(repo, func() time.Time { return now })
 
 	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-22", "2026-02-21")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-
-	var validationErr *pkgerror.InputValidationError
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected InputValidationError, got %T", err)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
 	}
 }
 

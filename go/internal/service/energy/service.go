@@ -39,18 +39,15 @@ func (s *service) GetByDate(ctx context.Context, uid, date string) (*domain.Ener
 }
 
 func (s *service) GetByDateRange(ctx context.Context, uid, from, to string) ([]domain.EnergyLevels, error) {
-	if err := validateDateField("from", from); err != nil {
-		return nil, err
-	}
-	if err := validateDateField("to", to); err != nil {
-		return nil, err
+	fromDate, fromOK := parseDate(from)
+	toDate, toOK := parseDate(to)
+	if !fromOK || !toOK || toDate.Before(fromDate) {
+		toDate = s.timeNow()
+		fromDate = toDate.AddDate(0, 0, -6)
 	}
 
-	fromDate, _ := time.Parse("2006-01-02", from)
-	toDate, _ := time.Parse("2006-01-02", to)
-	if toDate.Before(fromDate) {
-		return nil, pkgerror.NewInputValidationError("from", "must be on or before to")
-	}
+	from = fromDate.Format("2006-01-02")
+	to = toDate.Format("2006-01-02")
 
 	if int(toDate.Sub(fromDate).Hours()/24) > 30 {
 		toDate = fromDate.AddDate(0, 0, 30)
@@ -97,6 +94,17 @@ func validateDateField(field, date string) error {
 	}
 
 	return nil
+}
+
+func parseDate(date string) (time.Time, bool) {
+	if date == "" || !datePattern.MatchString(date) {
+		return time.Time{}, false
+	}
+	parsed, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return time.Time{}, false
+	}
+	return parsed, true
 }
 
 func validateLevel(field string, value int) error {
