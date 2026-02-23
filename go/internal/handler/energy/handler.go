@@ -45,6 +45,44 @@ func (h *EnergyHandler) GetLevels(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *EnergyHandler) GetLevelsByRange(w http.ResponseWriter, r *http.Request) {
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	from := r.URL.Query().Get("from")
+	if from == "" {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "from query parameter is required"})
+		return
+	}
+
+	to := r.URL.Query().Get("to")
+	if to == "" {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "to query parameter is required"})
+		return
+	}
+
+	levels, err := h.service.GetByDateRange(r.Context(), u.UID, from, to)
+	if err != nil {
+		writeDomainError(w, err)
+		return
+	}
+
+	response := make([]EnergyLevelsResponse, 0, len(levels))
+	for _, level := range levels {
+		response = append(response, EnergyLevelsResponse{
+			Date:      level.Date,
+			Physical:  level.Physical,
+			Mental:    level.Mental,
+			Emotional: level.Emotional,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, EnergyLevelsRangeResponse(response))
+}
+
 func (h *EnergyHandler) SaveLevels(w http.ResponseWriter, r *http.Request) {
 	u, ok := middleware.UserFromContext(r.Context())
 	if !ok {

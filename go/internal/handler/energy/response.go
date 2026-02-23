@@ -12,6 +12,8 @@ type EnergyLevelsResponse struct {
 	Emotional int    `json:"emotional"`
 }
 
+type EnergyLevelsRangeResponse []EnergyLevelsResponse
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }

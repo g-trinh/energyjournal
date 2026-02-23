@@ -79,6 +79,63 @@ func TestEnergyHandler_GetLevels_NotFoundReturns404(t *testing.T) {
 	}
 }
 
+func TestEnergyHandler_GetLevelsByRange_MissingFromReturnsBadRequest(t *testing.T) {
+	t.Parallel()
+
+	handler := New(&stubEnergyService{})
+	req := withUserContext(httptest.NewRequest(http.MethodGet, "/energy/levels/range?to=2026-02-21", nil), "uid-1")
+	rr := httptest.NewRecorder()
+
+	handler.GetLevelsByRange(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	}
+}
+
+func TestEnergyHandler_GetLevelsByRange_MissingToReturnsBadRequest(t *testing.T) {
+	t.Parallel()
+
+	handler := New(&stubEnergyService{})
+	req := withUserContext(httptest.NewRequest(http.MethodGet, "/energy/levels/range?from=2026-02-01", nil), "uid-1")
+	rr := httptest.NewRecorder()
+
+	handler.GetLevelsByRange(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	}
+}
+
+func TestEnergyHandler_GetLevelsByRange_Success(t *testing.T) {
+	t.Parallel()
+
+	handler := New(&stubEnergyService{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			return []energy.EnergyLevels{
+				{UID: uid, Date: "2026-02-20", Physical: 6, Mental: 5, Emotional: 4},
+				{UID: uid, Date: "2026-02-21", Physical: 7, Mental: 6, Emotional: 8},
+			}, nil
+		},
+	})
+	req := withUserContext(httptest.NewRequest(http.MethodGet, "/energy/levels/range?from=2026-02-20&to=2026-02-21", nil), "uid-1")
+	rr := httptest.NewRecorder()
+
+	handler.GetLevelsByRange(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+
+	var payload []EnergyLevelsResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if len(payload) != 2 || payload[0].Date != "2026-02-20" || payload[1].Date != "2026-02-21" {
+		t.Fatalf("unexpected payload: %+v", payload)
+	}
+}
+
 func TestEnergyHandler_SaveLevels_MalformedBodyReturnsBadRequest(t *testing.T) {
 	t.Parallel()
 

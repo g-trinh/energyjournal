@@ -127,6 +127,7 @@ func register(mux *http.ServeMux, deps Dependencies) {
 	if deps.EnergyService != nil && deps.AuthMiddleware != nil {
 		energyLevelsHandler := energyhandler.New(deps.EnergyService)
 		mux.Handle("GET /energy/levels", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(energyLevelsHandler.GetLevels)))
+		mux.Handle("GET /energy/levels/range", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(energyLevelsHandler.GetLevelsByRange)))
 		mux.Handle("PUT /energy/levels", deps.AuthMiddleware.RequireActiveUser(http.HandlerFunc(energyLevelsHandler.SaveLevels)))
 	}
 }
