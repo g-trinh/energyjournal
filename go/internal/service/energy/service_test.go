@@ -52,6 +52,185 @@ func TestService_GetByDate_InvalidDateReturnsValidationError(t *testing.T) {
 	}
 }
 
+func TestService_GetByDateRange_MissingFrom(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "", "2026-02-21")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
+func TestService_GetByDateRange_MissingTo(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-21", "")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
+func TestService_GetByDateRange_MalformedFrom(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026/02/01", "2026-02-21")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
+func TestService_GetByDateRange_MalformedTo(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-01", "abc")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
+func TestService_GetByDateRange_InvalidCalendar(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-13-01", "2026-02-21")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
+func TestService_GetByDateRange_FromAfterTo(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-22", "2026-02-21")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
+func TestService_GetByDateRange_Valid_Delegates(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if from != "2026-02-01" || to != "2026-02-14" {
+				t.Fatalf("unexpected range: %s to %s", from, to)
+			}
+			return []energy.EnergyLevels{{UID: uid, Date: from, Physical: 6, Mental: 5, Emotional: 7}}, nil
+		},
+	}
+	svc := NewEnergyService(repo)
+
+	got, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-01", "2026-02-14")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(got))
+	}
+}
+
+func TestService_GetByDateRange_ExactlyThirtyDays(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if to != "2026-01-31" {
+				t.Fatalf("expected to remain 2026-01-31, got %s", to)
+			}
+			return []energy.EnergyLevels{}, nil
+		},
+	}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-01-01", "2026-01-31")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+}
+
+func TestService_GetByDateRange_ThirtyOneDays_Clamps(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if to != "2026-01-31" {
+				t.Fatalf("expected clamp to 2026-01-31, got %s", to)
+			}
+			return []energy.EnergyLevels{}, nil
+		},
+	}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-01-01", "2026-02-01")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+}
+
+func TestService_GetByDateRange_RepoError(t *testing.T) {
+	t.Parallel()
+
+	repoErr := errors.New("repository failure")
+	repo := &mockEnergyRepository{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			return nil, repoErr
+		},
+	}
+	svc := NewEnergyService(repo)
+
+	_, err := svc.GetByDateRange(context.Background(), "uid-1", "2026-02-01", "2026-02-14")
+	if !errors.Is(err, repoErr) {
+		t.Fatalf("expected %v, got %v", repoErr, err)
+	}
+}
+
 func TestService_Save_ValidInputSetsUpdatedAtAndDelegates(t *testing.T) {
 	t.Parallel()
 
