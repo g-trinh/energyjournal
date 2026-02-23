@@ -79,31 +79,45 @@ func TestEnergyHandler_GetLevels_NotFoundReturns404(t *testing.T) {
 	}
 }
 
-func TestEnergyHandler_GetLevelsByRange_MissingFromReturnsBadRequest(t *testing.T) {
+func TestEnergyHandler_GetLevelsByRange_MissingFromDelegatesToService(t *testing.T) {
 	t.Parallel()
 
-	handler := New(&stubEnergyService{})
+	handler := New(&stubEnergyService{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if from != "" || to != "2026-02-21" {
+				t.Fatalf("unexpected range values: from=%q to=%q", from, to)
+			}
+			return []energy.EnergyLevels{}, nil
+		},
+	})
 	req := withUserContext(httptest.NewRequest(http.MethodGet, "/energy/levels/range?to=2026-02-21", nil), "uid-1")
 	rr := httptest.NewRecorder()
 
 	handler.GetLevelsByRange(rr, req)
 
-	if rr.Code != http.StatusBadRequest {
-		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
 	}
 }
 
-func TestEnergyHandler_GetLevelsByRange_MissingToReturnsBadRequest(t *testing.T) {
+func TestEnergyHandler_GetLevelsByRange_MissingToDelegatesToService(t *testing.T) {
 	t.Parallel()
 
-	handler := New(&stubEnergyService{})
+	handler := New(&stubEnergyService{
+		getByDateRange: func(ctx context.Context, uid, from, to string) ([]energy.EnergyLevels, error) {
+			if from != "2026-02-01" || to != "" {
+				t.Fatalf("unexpected range values: from=%q to=%q", from, to)
+			}
+			return []energy.EnergyLevels{}, nil
+		},
+	})
 	req := withUserContext(httptest.NewRequest(http.MethodGet, "/energy/levels/range?from=2026-02-01", nil), "uid-1")
 	rr := httptest.NewRecorder()
 
 	handler.GetLevelsByRange(rr, req)
 
-	if rr.Code != http.StatusBadRequest {
-		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
 	}
 }
 

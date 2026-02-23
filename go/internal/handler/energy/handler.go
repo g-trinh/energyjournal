@@ -77,16 +77,7 @@ func (h *EnergyHandler) GetLevelsByRange(w http.ResponseWriter, r *http.Request)
 	}
 
 	from := r.URL.Query().Get("from")
-	if from == "" {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "from query parameter is required"})
-		return
-	}
-
 	to := r.URL.Query().Get("to")
-	if to == "" {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "to query parameter is required"})
-		return
-	}
 
 	levels, err := h.service.GetByDateRange(r.Context(), u.UID, from, to)
 	if err != nil {
