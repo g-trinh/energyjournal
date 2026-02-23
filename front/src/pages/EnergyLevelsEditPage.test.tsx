@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { MemoryRouter } from 'react-router-dom'
 import EnergyLevelsEditPage from './EnergyLevelsEditPage'
+import { ENERGY_LEVELS_FORCE_REFRESH_KEY, ENERGY_LEVELS_RANGE_CACHE_KEY } from '@/lib/energyLevelsCache'
 import {
   getEnergyLevels,
   saveEnergyLevels,
@@ -28,7 +30,21 @@ vi.mock('@/lib/session', () => ({
   getIdToken: () => 'test-token',
 }))
 
+const navigateMock = vi.fn()
+vi.mock('react-router-dom', async (importOriginal) => {
+  const original = await importOriginal<typeof import('react-router-dom')>()
+  return {
+    ...original,
+    useNavigate: () => navigateMock,
+  }
+})
+
 describe('EnergyLevelsEditPage', () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+    navigateMock.mockReset()
+  })
+
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -44,7 +60,13 @@ describe('EnergyLevelsEditPage', () => {
     }
     vi.mocked(saveEnergyLevels).mockResolvedValue(saved)
 
-    render(<EnergyLevelsEditPage />)
+    sessionStorage.setItem(ENERGY_LEVELS_RANGE_CACHE_KEY, '{"from":"2026-02-10","to":"2026-02-23","levels":[],"status":"empty"}')
+
+    render(
+      <MemoryRouter>
+        <EnergyLevelsEditPage />
+      </MemoryRouter>,
+    )
 
     const physicalSlider = await screen.findByRole('slider', {
       name: 'Physical energy level',
@@ -76,5 +98,24 @@ describe('EnergyLevelsEditPage', () => {
     expect(
       screen.getByText(/Physical 5 · Mental 5 · Emotional 5/),
     ).toBeInTheDocument()
+    expect(sessionStorage.getItem(ENERGY_LEVELS_RANGE_CACHE_KEY)).toBeNull()
+    expect(sessionStorage.getItem(ENERGY_LEVELS_FORCE_REFRESH_KEY)).toBe('1')
+    expect(navigateMock).not.toHaveBeenCalled()
+  })
+
+  it('navigates to levels when clicking Back and Cancel', async () => {
+    vi.mocked(getEnergyLevels).mockResolvedValue(null)
+
+    render(
+      <MemoryRouter>
+        <EnergyLevelsEditPage />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /back to energy levels/i }))
+    expect(navigateMock).toHaveBeenCalledWith('/energy/levels')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(navigateMock).toHaveBeenCalledWith('/energy/levels')
   })
 })

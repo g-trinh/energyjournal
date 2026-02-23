@@ -1,5 +1,11 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import EnergyTooltip from '@/components/energy/EnergyTooltip'
+import {
+  ENERGY_LEVELS_FORCE_REFRESH_KEY,
+  clearEnergyLevelsRangeCache,
+  readEnergyLevelsRangeCache,
+  writeEnergyLevelsRangeCache,
+} from '@/lib/energyLevelsCache'
 import { ENERGY_COLORS, ENERGY_LABELS, type EnergyDimension } from '@/lib/energyColors'
 import { getIdToken } from '@/lib/session'
 import {
@@ -88,12 +94,27 @@ export function buildChartData(levels: EnergyLevels[], from: string, to: string)
 }
 
 export default function EnergyLevelsPage() {
+  const initialCache = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return null
+    }
+
+    const forceRefresh = window.sessionStorage.getItem(ENERGY_LEVELS_FORCE_REFRESH_KEY) === '1'
+    if (forceRefresh) {
+      window.sessionStorage.removeItem(ENERGY_LEVELS_FORCE_REFRESH_KEY)
+      clearEnergyLevelsRangeCache()
+      return null
+    }
+
+    return readEnergyLevelsRangeCache()
+  }, [])
+
   const today = useMemo(() => todayAsDateInputValue(), [])
-  const [from, setFrom] = useState<string>(() => addDays(today, -13))
-  const [to, setTo] = useState<string>(() => today)
-  const [preset, setPreset] = useState<Preset>('14d')
-  const [levels, setLevels] = useState<EnergyLevels[]>([])
-  const [status, setStatus] = useState<PageStatus>('idle')
+  const [from, setFrom] = useState<string>(() => initialCache?.from ?? addDays(today, -13))
+  const [to, setTo] = useState<string>(() => initialCache?.to ?? today)
+  const [preset, setPreset] = useState<Preset>(() => (initialCache ? 'custom' : '14d'))
+  const [levels, setLevels] = useState<EnergyLevels[]>(() => initialCache?.levels ?? [])
+  const [status, setStatus] = useState<PageStatus>(() => initialCache?.status ?? 'idle')
   const [clampWarning, setClampWarning] = useState<boolean>(false)
   const [hiddenLines, setHiddenLines] = useState<Set<EnergyDimension>>(new Set())
   const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -111,17 +132,21 @@ export default function EnergyLevelsPage() {
 
     const media = window.matchMedia('(max-width: 768px)')
     const handler = (event: MediaQueryListEvent) => setIsMobile(event.matches)
+    const legacyMedia = media as MediaQueryList & {
+      addListener?: (listener: (event: MediaQueryListEvent) => void) => void
+      removeListener?: (listener: (event: MediaQueryListEvent) => void) => void
+    }
     if ('addEventListener' in media) {
       media.addEventListener('change', handler)
     } else {
-      media.addListener(handler)
+      legacyMedia.addListener?.(handler)
     }
 
     return () => {
       if ('removeEventListener' in media) {
         media.removeEventListener('change', handler)
       } else {
-        media.removeListener(handler)
+        legacyMedia.removeListener?.(handler)
       }
     }
   }, [])
@@ -149,9 +174,21 @@ export default function EnergyLevelsPage() {
       if (result.length === 0) {
         setLevels([])
         setStatus('empty')
+        writeEnergyLevelsRangeCache({
+          from: nextFrom,
+          to: nextTo,
+          levels: [],
+          status: 'empty',
+        })
       } else {
         setLevels(result)
         setStatus('success')
+        writeEnergyLevelsRangeCache({
+          from: nextFrom,
+          to: nextTo,
+          levels: result,
+          status: 'success',
+        })
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {

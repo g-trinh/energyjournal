@@ -1,6 +1,10 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getIdToken } from '@/lib/session'
 import {
+  ENERGY_LEVELS_FORCE_REFRESH_KEY,
+  clearEnergyLevelsRangeCache,
+} from '@/lib/energyLevelsCache'
+import {
   formatDisplayDate,
   getEnergyLevels,
   saveEnergyLevels,
@@ -9,6 +13,7 @@ import {
 import EnergySection from '@/components/energy/EnergySection'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import '../App.css'
 import '@/styles/energy-edit.css'
 
@@ -29,6 +34,7 @@ function formatToastDate(date: string): string {
 }
 
 export default function EnergyLevelsEditPage() {
+  const navigate = useNavigate()
   const [date, setDate] = useState<string>(todayAsDateInputValue)
   const [physical, setPhysical] = useState<number>(DEFAULT_LEVEL)
   const [mental, setMental] = useState<number>(DEFAULT_LEVEL)
@@ -128,6 +134,8 @@ export default function EnergyLevelsEditPage() {
       setEmotional(saved.emotional)
       setHasExistingData(true)
       setToastData(saved)
+      clearEnergyLevelsRangeCache()
+      window.sessionStorage.setItem(ENERGY_LEVELS_FORCE_REFRESH_KEY, '1')
       setStatus('idle')
     } catch {
       setSaveError('Failed to save. Please try again.')
@@ -137,6 +145,10 @@ export default function EnergyLevelsEditPage() {
 
   const isBusy = status === 'loading'
 
+  function goBack() {
+    navigate('/energy/levels')
+  }
+
   return (
     <main className="app energy-edit-page">
       <div className="ambient-glow ambient-glow-1" />
@@ -145,8 +157,19 @@ export default function EnergyLevelsEditPage() {
 
       <Card className="energy-edit-card">
         <CardHeader className="energy-edit-card-header">
+          <button
+            type="button"
+            className="energy-edit-back-btn"
+            onClick={goBack}
+            aria-label="Back to energy levels"
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M8 5l-5 5 5 5M15 10H4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back
+          </button>
           <h1 className="energy-edit-title">Edit Energy Levels</h1>
-          <p className="energy-edit-subtitle">Choose a date and record how you feel across all three dimensions</p>
+          <p className="energy-edit-subtitle">Save and return to refreshed trend chart.</p>
         </CardHeader>
 
         <CardContent className="energy-edit-card-content">
@@ -248,9 +271,7 @@ export default function EnergyLevelsEditPage() {
             <button
               className="energy-cancel-link"
               type="button"
-              onClick={() => {
-                // TODO: wire navigation
-              }}
+              onClick={goBack}
             >
               Cancel
             </button>

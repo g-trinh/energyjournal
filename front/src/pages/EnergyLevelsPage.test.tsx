@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
+import { ENERGY_LEVELS_FORCE_REFRESH_KEY, ENERGY_LEVELS_RANGE_CACHE_KEY } from '@/lib/energyLevelsCache'
 import EnergyLevelsPage, { buildChartData } from './EnergyLevelsPage'
 import { getEnergyLevelsRange } from '@/services/energyLevels'
 
@@ -56,6 +57,7 @@ describe('EnergyLevelsPage', () => {
   const originalMatchMedia = window.matchMedia
 
   beforeEach(() => {
+    sessionStorage.clear()
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.setSystemTime(new Date('2026-02-23T12:00:00'))
     Object.defineProperty(window, 'matchMedia', {
@@ -174,5 +176,34 @@ describe('EnergyLevelsPage', () => {
 
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('line-physical')).toHaveAttribute('data-hide', 'true')
+  })
+
+  it('ignores cached range when refresh marker is present', async () => {
+    sessionStorage.setItem(
+      ENERGY_LEVELS_RANGE_CACHE_KEY,
+      JSON.stringify({
+        from: '2026-02-01',
+        to: '2026-02-07',
+        levels: [{ date: '2026-02-02', physical: 6, mental: 4, emotional: 5 }],
+        status: 'success',
+      }),
+    )
+    sessionStorage.setItem(ENERGY_LEVELS_FORCE_REFRESH_KEY, '1')
+    vi.mocked(getEnergyLevelsRange).mockResolvedValue([])
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(getEnergyLevelsRange).toHaveBeenLastCalledWith(
+        '2026-02-10',
+        '2026-02-23',
+        'test-token',
+        expect.any(AbortSignal),
+      )
+    })
+    expect(sessionStorage.getItem(ENERGY_LEVELS_FORCE_REFRESH_KEY)).toBeNull()
+    expect(sessionStorage.getItem(ENERGY_LEVELS_RANGE_CACHE_KEY)).toContain(
+      '"status":"empty"',
+    )
   })
 })
