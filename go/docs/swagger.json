@@ -134,6 +134,73 @@
         }
       }
     },
+    "/energy/levels/range": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Returns all energy levels recorded by the authenticated user between from and to (inclusive). Dates with no record are omitted. Max range is 30 days.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "energy"
+        ],
+        "summary": "Get energy levels for a date range",
+        "parameters": [
+          {
+            "type": "string",
+            "example": "2026-02-09",
+            "description": "Start date (YYYY-MM-DD, inclusive)",
+            "name": "from",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "example": "2026-02-23",
+            "description": "End date (YYYY-MM-DD, inclusive)",
+            "name": "to",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/energy.EnergyLevelsRangeResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request — missing/malformed dates or from > to",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden — inactive user",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/energy.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
     "/calendar/spending": {
       "get": {
         "security": [
@@ -581,6 +648,12 @@
           "minimum": 0,
           "maximum": 10
         }
+      }
+    },
+    "energy.EnergyLevelsRangeResponse": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/energy.EnergyLevelsResponse"
       }
     },
     "energy.SaveEnergyLevelsRequest": {

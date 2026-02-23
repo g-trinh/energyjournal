@@ -1,5 +1,56 @@
 basePath: /
 definitions:
+  energy.EnergyLevelsResponse:
+    properties:
+      date:
+        example: "2026-02-21"
+        type: string
+      emotional:
+        maximum: 10
+        minimum: 0
+        type: integer
+      mental:
+        maximum: 10
+        minimum: 0
+        type: integer
+      physical:
+        maximum: 10
+        minimum: 0
+        type: integer
+    type: object
+  energy.EnergyLevelsRangeResponse:
+    items:
+      $ref: '#/definitions/energy.EnergyLevelsResponse'
+    type: array
+  energy.SaveEnergyLevelsRequest:
+    properties:
+      date:
+        description: Calendar date in YYYY-MM-DD format
+        example: "2026-02-21"
+        type: string
+      emotional:
+        maximum: 10
+        minimum: 0
+        type: integer
+      mental:
+        maximum: 10
+        minimum: 0
+        type: integer
+      physical:
+        maximum: 10
+        minimum: 0
+        type: integer
+    required:
+    - date
+    - physical
+    - mental
+    - emotional
+    type: object
+  energy.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
   calendar.ErrorResponse:
     properties:
       error:
@@ -75,6 +126,131 @@ info:
   title: Energy Journal API
   version: "1.0"
 paths:
+  /energy/levels:
+    get:
+      description: Returns the energy levels (physical, mental, emotional) recorded by the authenticated user for the given date. Returns 404 if no record exists for that date.
+      security:
+      - BearerAuth: []
+      parameters:
+      - description: Calendar date (YYYY-MM-DD)
+        example: "2026-02-21"
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/energy.EnergyLevelsResponse'
+        "400":
+          description: Bad Request — missing or malformed date
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "403":
+          description: Forbidden — inactive user
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "404":
+          description: Not Found — no record for this date
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+      summary: Get energy levels for a date
+      tags:
+      - energy
+    put:
+      consumes:
+      - application/json
+      description: Creates or overwrites the energy levels for the authenticated user on the given date. All three dimension values must be integers in [0, 10].
+      security:
+      - BearerAuth: []
+      parameters:
+      - description: Energy levels payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/energy.SaveEnergyLevelsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/energy.EnergyLevelsResponse'
+        "400":
+          description: Bad Request — validation failure
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "403":
+          description: Forbidden — inactive user
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+      summary: Save (upsert) energy levels for a date
+      tags:
+      - energy
+  /energy/levels/range:
+    get:
+      description: Returns all energy levels recorded by the authenticated user between from and to (inclusive). Dates with no record are omitted. Max range is 30 days.
+      security:
+      - BearerAuth: []
+      parameters:
+      - description: Start date (YYYY-MM-DD, inclusive)
+        example: "2026-02-09"
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: End date (YYYY-MM-DD, inclusive)
+        example: "2026-02-23"
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/energy.EnergyLevelsRangeResponse'
+        "400":
+          description: Bad Request — missing/malformed dates or from > to
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "403":
+          description: Forbidden — inactive user
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/energy.ErrorResponse'
+      summary: Get energy levels for a date range
+      tags:
+      - energy
   /calendar/spending:
     get:
       description: Returns spending totals by category between two dates (inclusive).
