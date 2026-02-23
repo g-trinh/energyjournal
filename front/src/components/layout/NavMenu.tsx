@@ -9,14 +9,15 @@ export default function NavMenu() {
 
   const isAnonymous = status === 'anonymous'
   const isTimeSpendingActive = !isAnonymous && location.pathname === '/timespending'
-  const isEnergyActive = !isAnonymous && location.pathname === '/energy/levels/edit'
+  const isEnergyActive =
+    !isAnonymous && location.pathname.startsWith('/energy/levels')
 
   function handleTimeSpendingClick() {
     navigate(isAnonymous ? '/auth' : '/timespending')
   }
 
   function handleEnergyClick() {
-    navigate(isAnonymous ? '/auth' : '/energy/levels/edit')
+    navigate(isAnonymous ? '/auth' : '/energy/levels')
   }
 
   return (
