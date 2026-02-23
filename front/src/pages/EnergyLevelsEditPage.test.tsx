@@ -15,10 +15,14 @@ vi.mock('react-dom', async (importOriginal) => {
   }
 })
 
-vi.mock('@/services/energyLevels', () => ({
-  getEnergyLevels: vi.fn(),
-  saveEnergyLevels: vi.fn(),
-}))
+vi.mock('@/services/energyLevels', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/energyLevels')>()
+  return {
+    ...actual,
+    getEnergyLevels: vi.fn(),
+    saveEnergyLevels: vi.fn(),
+  }
+})
 
 vi.mock('@/lib/session', () => ({
   getIdToken: () => 'test-token',
