@@ -109,3 +109,108 @@
     font-size: 0.58rem;
   }
 }
+
+.energy-context-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.energy-context-label {
+  color: var(--color-accent-amber);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.energy-context-trigger {
+  min-height: 50px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 164, 69, 0.25);
+  background: var(--color-bg-deep);
+  color: var(--color-text-primary);
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color var(--duration-normal) var(--ease-out-expo),
+    box-shadow var(--duration-normal) var(--ease-out-expo),
+    opacity var(--duration-normal) var(--ease-out-expo);
+}
+
+.energy-context-trigger:hover:not(:disabled) {
+  border-color: rgba(232, 164, 69, 0.5);
+}
+
+.energy-context-trigger:focus-visible {
+  outline: none;
+  border-color: rgba(232, 164, 69, 0.56);
+  box-shadow: 0 0 0 3px rgba(232, 164, 69, 0.3);
+}
+
+.energy-context-trigger:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.energy-context-value {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.energy-context-value.is-placeholder {
+  color: var(--color-text-muted);
+}
+
+.energy-context-chevron {
+  color: var(--color-text-muted);
+  transition: transform var(--duration-fast) var(--ease-out-expo);
+}
+
+.energy-context-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.energy-context-options {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 164, 69, 0.25);
+  background: rgba(26, 24, 22, 0.98);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  padding: 6px;
+}
+
+.energy-context-option {
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  text-align: left;
+  border-radius: 10px;
+  padding: 10px 10px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out-expo),
+    color var(--duration-fast) var(--ease-out-expo);
+}
+
+.energy-context-option:hover,
+.energy-context-option.is-active {
+  background: rgba(232, 164, 69, 0.16);
+}
+
+.energy-context-option.is-selected {
+  color: var(--color-accent-amber);
+}
