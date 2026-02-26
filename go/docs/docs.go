@@ -210,8 +210,52 @@ const docTemplate = `{
                 "mental": {
                     "type": "integer"
                 },
+                "notes": {
+                    "type": "string"
+                },
+                "nutrition": {
+                    "type": "string",
+                    "enum": [
+                        "poor",
+                        "average",
+                        "good",
+                        "excellent"
+                    ]
+                },
                 "physical": {
                     "type": "integer"
+                },
+                "physicalActivity": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "light",
+                        "moderate",
+                        "intense"
+                    ]
+                },
+                "sleepQuality": {
+                    "type": "integer"
+                },
+                "socialInteractions": {
+                    "type": "string",
+                    "enum": [
+                        "negative",
+                        "neutral",
+                        "positive"
+                    ]
+                },
+                "stressLevel": {
+                    "type": "integer"
+                },
+                "timeOutdoors": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "under_30min",
+                        "30min_1hr",
+                        "over_1hr"
+                    ]
                 }
             }
         },
@@ -235,8 +279,52 @@ const docTemplate = `{
                 "mental": {
                     "type": "integer"
                 },
+                "notes": {
+                    "type": "string"
+                },
+                "nutrition": {
+                    "type": "string",
+                    "enum": [
+                        "poor",
+                        "average",
+                        "good",
+                        "excellent"
+                    ]
+                },
                 "physical": {
                     "type": "integer"
+                },
+                "physicalActivity": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "light",
+                        "moderate",
+                        "intense"
+                    ]
+                },
+                "sleepQuality": {
+                    "type": "integer"
+                },
+                "socialInteractions": {
+                    "type": "string",
+                    "enum": [
+                        "negative",
+                        "neutral",
+                        "positive"
+                    ]
+                },
+                "stressLevel": {
+                    "type": "integer"
+                },
+                "timeOutdoors": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "under_30min",
+                        "30min_1hr",
+                        "over_1hr"
+                    ]
                 }
             }
         }
