@@ -6,6 +6,8 @@ interface EnergySliderProps {
   ariaLabel: string
   onChange: (value: number) => void
   disabled?: boolean
+  min?: number
+  max?: number
 }
 
 export default function EnergySlider({
@@ -14,9 +16,12 @@ export default function EnergySlider({
   ariaLabel,
   onChange,
   disabled = false,
+  min = 0,
+  max = 10,
 }: EnergySliderProps) {
+  const range = max - min
   const style = {
-    '--fill': `${(value / 10) * 100}%`,
+    '--fill': `${range === 0 ? 0 : ((value - min) / range) * 100}%`,
     '--track-color': color,
   } as CSSProperties
 
@@ -28,15 +33,15 @@ export default function EnergySlider({
     <input
       type="range"
       className="energy-slider"
-      min={0}
-      max={10}
+      min={min}
+      max={max}
       step={1}
       value={value}
       onChange={handleChange}
       disabled={disabled}
       aria-label={ariaLabel}
-      aria-valuemin={0}
-      aria-valuemax={10}
+      aria-valuemin={min}
+      aria-valuemax={max}
       aria-valuenow={value}
       style={style}
     />
