@@ -1,0 +1,111 @@
+.energy-step-indicator {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 30px;
+}
+
+.energy-step-indicator-inner {
+  position: relative;
+  width: min(320px, 100%);
+  display: flex;
+  justify-content: space-between;
+}
+
+.energy-step-indicator-line {
+  position: absolute;
+  left: calc(25% + 14px);
+  right: calc(25% + 14px);
+  top: 14px;
+  height: 2px;
+  background: rgba(232, 164, 69, 0.75);
+}
+
+.energy-step-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 50%;
+}
+
+.energy-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(160, 154, 144, 0.35);
+  background: rgba(160, 154, 144, 0.22);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast) var(--ease-out-expo),
+    color var(--duration-fast) var(--ease-out-expo),
+    box-shadow var(--duration-fast) var(--ease-out-expo);
+}
+
+.energy-step-dot:hover:not(:disabled) {
+  border-color: rgba(232, 164, 69, 0.55);
+  box-shadow: 0 0 0 3px rgba(232, 164, 69, 0.12);
+}
+
+.energy-step-dot:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-accent-amber-glow);
+}
+
+.energy-step-dot:disabled {
+  cursor: default;
+}
+
+.energy-step-dot.is-active,
+.energy-step-dot.is-complete {
+  background: var(--color-accent-amber);
+  border-color: var(--color-accent-amber);
+  color: #1a1816;
+}
+
+.energy-step-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.energy-step-item-left .energy-step-label {
+  color: var(--color-text-secondary);
+}
+
+.energy-step-item-right .energy-step-label {
+  color: var(--color-text-muted);
+}
+
+.energy-step-label.is-active {
+  color: var(--color-accent-amber);
+  font-weight: 700;
+}
+
+.energy-step-check {
+  width: 12px;
+  height: 12px;
+}
+
+@media (max-width: 480px) {
+  .energy-step-indicator {
+    margin-bottom: 24px;
+  }
+
+  .energy-step-indicator-inner {
+    width: 200px;
+  }
+
+  .energy-step-label {
+    font-size: 0.58rem;
+  }
+}
