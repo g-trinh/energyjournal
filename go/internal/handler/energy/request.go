@@ -5,8 +5,8 @@ type SaveEnergyLevelsRequest struct {
 	Physical           int    `json:"physical"`
 	Mental             int    `json:"mental"`
 	Emotional          int    `json:"emotional"`
-	SleepQuality       int    `json:"sleepQuality,omitempty"`
-	StressLevel        int    `json:"stressLevel,omitempty"`
+	SleepQuality       *int   `json:"sleepQuality,omitempty"`
+	StressLevel        *int   `json:"stressLevel,omitempty"`
 	PhysicalActivity   string `json:"physicalActivity,omitempty" enums:"none,light,moderate,intense"`
 	Nutrition          string `json:"nutrition,omitempty" enums:"poor,average,good,excellent"`
 	SocialInteractions string `json:"socialInteractions,omitempty" enums:"negative,neutral,positive"`

@@ -159,11 +159,11 @@ func validateLevel(field string, value int) error {
 	return nil
 }
 
-func validateOptionalScaleField(field string, value int) error {
-	if value == 0 {
+func validateOptionalScaleField(field string, value *int) error {
+	if value == nil {
 		return nil
 	}
-	if value < 1 || value > 5 {
+	if *value < 1 || *value > 5 {
 		return pkgerror.NewInputValidationError(field, "must be between 1 and 5")
 	}
 	return nil

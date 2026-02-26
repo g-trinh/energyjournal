@@ -119,10 +119,10 @@ export async function saveEnergyLevels(
     emotional: levels.emotional,
   }
 
-  if (levels.sleepQuality !== undefined && levels.sleepQuality !== 0) {
+  if (levels.sleepQuality !== undefined) {
     body.sleepQuality = levels.sleepQuality
   }
-  if (levels.stressLevel !== undefined && levels.stressLevel !== 0) {
+  if (levels.stressLevel !== undefined) {
     body.stressLevel = levels.stressLevel
   }
   if (levels.physicalActivity) {
@@ -177,7 +177,7 @@ function parseEnergyLevels(payload: unknown): EnergyLevels {
 }
 
 function normalizeOptionalNumber(value: unknown): number | undefined {
-  if (typeof value !== 'number' || value === 0) {
+  if (typeof value !== 'number') {
     return undefined
   }
   return value

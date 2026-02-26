@@ -11,8 +11,8 @@ type EnergyLevels struct {
 	Physical           int
 	Mental             int
 	Emotional          int
-	SleepQuality       int
-	StressLevel        int
+	SleepQuality       *int
+	StressLevel        *int
 	PhysicalActivity   string
 	Nutrition          string
 	SocialInteractions string

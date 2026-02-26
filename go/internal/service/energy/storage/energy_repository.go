@@ -44,8 +44,8 @@ func (r *FirestoreEnergyRepository) GetByDate(ctx context.Context, uid, date str
 		Physical:           getInt(data, "physical"),
 		Mental:             getInt(data, "mental"),
 		Emotional:          getInt(data, "emotional"),
-		SleepQuality:       getInt(data, "sleepQuality"),
-		StressLevel:        getInt(data, "stressLevel"),
+		SleepQuality:       getOptionalInt(data, "sleepQuality"),
+		StressLevel:        getOptionalInt(data, "stressLevel"),
 		PhysicalActivity:   getString(data, "physicalActivity"),
 		Nutrition:          getString(data, "nutrition"),
 		SocialInteractions: getString(data, "socialInteractions"),
@@ -84,8 +84,8 @@ func (r *FirestoreEnergyRepository) GetByDateRange(ctx context.Context, uid, fro
 			Physical:           getInt(data, "physical"),
 			Mental:             getInt(data, "mental"),
 			Emotional:          getInt(data, "emotional"),
-			SleepQuality:       getInt(data, "sleepQuality"),
-			StressLevel:        getInt(data, "stressLevel"),
+			SleepQuality:       getOptionalInt(data, "sleepQuality"),
+			StressLevel:        getOptionalInt(data, "stressLevel"),
 			PhysicalActivity:   getString(data, "physicalActivity"),
 			Nutrition:          getString(data, "nutrition"),
 			SocialInteractions: getString(data, "socialInteractions"),
@@ -124,8 +124,8 @@ func (r *FirestoreEnergyRepository) Upsert(ctx context.Context, levels energy.En
 		"physical":           levels.Physical,
 		"mental":             levels.Mental,
 		"emotional":          levels.Emotional,
-		"sleepQuality":       levels.SleepQuality,
-		"stressLevel":        levels.StressLevel,
+		"sleepQuality":       intPtrToAny(levels.SleepQuality),
+		"stressLevel":        intPtrToAny(levels.StressLevel),
 		"physicalActivity":   levels.PhysicalActivity,
 		"nutrition":          levels.Nutrition,
 		"socialInteractions": levels.SocialInteractions,
@@ -157,6 +157,32 @@ func getInt(data map[string]any, key string) int {
 	default:
 		return 0
 	}
+}
+
+func getOptionalInt(data map[string]any, key string) *int {
+	v, ok := data[key]
+	if !ok || v == nil {
+		return nil
+	}
+	switch n := v.(type) {
+	case int:
+		return &n
+	case int64:
+		i := int(n)
+		return &i
+	case float64:
+		i := int(n)
+		return &i
+	default:
+		return nil
+	}
+}
+
+func intPtrToAny(p *int) any {
+	if p == nil {
+		return nil
+	}
+	return *p
 }
 
 func getTimestamp(data map[string]any, key string) time.Time {

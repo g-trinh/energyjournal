@@ -278,8 +278,8 @@ func TestService_Save_ContextEnumsValidPass(t *testing.T) {
 		Physical:           4,
 		Mental:             5,
 		Emotional:          6,
-		SleepQuality:       5,
-		StressLevel:        1,
+		SleepQuality:       intPtr(5),
+		StressLevel:        intPtr(1),
 		PhysicalActivity:   "moderate",
 		Nutrition:          "good",
 		SocialInteractions: "positive",
@@ -330,18 +330,18 @@ func TestService_Save_SleepQualityValidation(t *testing.T) {
 
 	err := svc.Save(context.Background(), base)
 	if err != nil {
-		t.Fatalf("expected sleepQuality=0 to pass, got %v", err)
+		t.Fatalf("expected nil sleepQuality to pass, got %v", err)
 	}
 
 	withFive := base
-	withFive.SleepQuality = 5
+	withFive.SleepQuality = intPtr(5)
 	err = svc.Save(context.Background(), withFive)
 	if err != nil {
 		t.Fatalf("expected sleepQuality=5 to pass, got %v", err)
 	}
 
 	withSix := base
-	withSix.SleepQuality = 6
+	withSix.SleepQuality = intPtr(6)
 	err = svc.Save(context.Background(), withSix)
 	if err == nil {
 		t.Fatal("expected error for sleepQuality=6, got nil")
@@ -375,6 +375,8 @@ func TestService_Save_PropagatesRepositoryErrors(t *testing.T) {
 		t.Fatalf("expected %v, got %v", repoErr, err)
 	}
 }
+
+func intPtr(n int) *int { return &n }
 
 type mockEnergyRepository struct {
 	getByDate      func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)

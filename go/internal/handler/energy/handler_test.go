@@ -40,8 +40,8 @@ func TestEnergyHandler_GetLevels_Success(t *testing.T) {
 				Physical:           7,
 				Mental:             5,
 				Emotional:          8,
-				SleepQuality:       4,
-				StressLevel:        2,
+				SleepQuality:       intPtr(4),
+				StressLevel:        intPtr(2),
 				PhysicalActivity:   "light",
 				Nutrition:          "good",
 				SocialInteractions: "positive",
@@ -66,7 +66,7 @@ func TestEnergyHandler_GetLevels_Success(t *testing.T) {
 	if payload.Date != "2026-02-21" || payload.Physical != 7 || payload.Mental != 5 || payload.Emotional != 8 {
 		t.Fatalf("unexpected payload: %+v", payload)
 	}
-	if payload.SleepQuality != 4 || payload.StressLevel != 2 || payload.PhysicalActivity != "light" {
+	if payload.SleepQuality == nil || *payload.SleepQuality != 4 || payload.StressLevel == nil || *payload.StressLevel != 2 || payload.PhysicalActivity != "light" {
 		t.Fatalf("unexpected context payload: %+v", payload)
 	}
 	if payload.Nutrition != "good" || payload.SocialInteractions != "positive" || payload.TimeOutdoors != "30min_1hr" {
@@ -149,8 +149,8 @@ func TestEnergyHandler_GetLevelsByRange_Success(t *testing.T) {
 					Physical:           6,
 					Mental:             5,
 					Emotional:          4,
-					SleepQuality:       3,
-					StressLevel:        1,
+					SleepQuality:       intPtr(3),
+					StressLevel:        intPtr(1),
 					PhysicalActivity:   "none",
 					Nutrition:          "average",
 					SocialInteractions: "neutral",
@@ -163,8 +163,8 @@ func TestEnergyHandler_GetLevelsByRange_Success(t *testing.T) {
 					Physical:           7,
 					Mental:             6,
 					Emotional:          8,
-					SleepQuality:       5,
-					StressLevel:        2,
+					SleepQuality:       intPtr(5),
+					StressLevel:        intPtr(2),
 					PhysicalActivity:   "moderate",
 					Nutrition:          "good",
 					SocialInteractions: "positive",
@@ -193,7 +193,7 @@ func TestEnergyHandler_GetLevelsByRange_Success(t *testing.T) {
 	if payload[0].PhysicalActivity != "none" || payload[1].PhysicalActivity != "moderate" {
 		t.Fatalf("expected context fields in range response, got %+v", payload)
 	}
-	if payload[0].SleepQuality != 3 || payload[1].SleepQuality != 5 {
+	if payload[0].SleepQuality == nil || *payload[0].SleepQuality != 3 || payload[1].SleepQuality == nil || *payload[1].SleepQuality != 5 {
 		t.Fatalf("expected context fields in range response, got %+v", payload)
 	}
 }
@@ -236,7 +236,7 @@ func TestEnergyHandler_SaveLevels_Success(t *testing.T) {
 
 	handler := New(&stubEnergyService{
 		save: func(ctx context.Context, levels energy.EnergyLevels) error {
-			if levels.SleepQuality != 4 || levels.StressLevel != 3 {
+			if levels.SleepQuality == nil || *levels.SleepQuality != 4 || levels.StressLevel == nil || *levels.StressLevel != 3 {
 				t.Fatalf("expected context int fields to be mapped, got %+v", levels)
 			}
 			if levels.PhysicalActivity != "light" || levels.Nutrition != "good" {
@@ -268,7 +268,7 @@ func TestEnergyHandler_SaveLevels_Success(t *testing.T) {
 	if payload.Date != "2026-02-21" || payload.Physical != 7 || payload.Mental != 5 || payload.Emotional != 8 {
 		t.Fatalf("unexpected payload: %+v", payload)
 	}
-	if payload.SleepQuality != 4 || payload.StressLevel != 3 || payload.PhysicalActivity != "light" {
+	if payload.SleepQuality == nil || *payload.SleepQuality != 4 || payload.StressLevel == nil || *payload.StressLevel != 3 || payload.PhysicalActivity != "light" {
 		t.Fatalf("unexpected context payload: %+v", payload)
 	}
 	if payload.Nutrition != "good" || payload.SocialInteractions != "positive" || payload.TimeOutdoors != "over_1hr" {
@@ -324,6 +324,8 @@ func (s *stubEnergyService) Save(ctx context.Context, levels energy.EnergyLevels
 	}
 	return nil
 }
+
+func intPtr(n int) *int { return &n }
 
 func withUserContext(req *http.Request, uid string) *http.Request {
 	ctx := context.WithValue(req.Context(), middleware.ContextKeyUser, &user.User{
