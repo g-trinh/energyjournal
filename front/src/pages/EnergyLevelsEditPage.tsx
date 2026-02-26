@@ -11,15 +11,19 @@ import {
   type EnergyLevels,
 } from '@/services/energyLevels'
 import EnergySection from '@/components/energy/EnergySection'
+import StepIndicator from '@/components/energy/StepIndicator'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import '../App.css'
 import '@/styles/energy-edit.css'
+import '@/styles/energy-context.css'
 
 type PageStatus = 'loading' | 'idle' | 'saving'
+type FormStep = 1 | 2
 
 const DEFAULT_LEVEL = 5
+const DEFAULT_CONTEXT_LEVEL = 3
 
 function todayAsDateInputValue(): string {
   return new Date().toLocaleDateString('en-CA')
@@ -35,10 +39,18 @@ function formatToastDate(date: string): string {
 
 export default function EnergyLevelsEditPage() {
   const navigate = useNavigate()
+  const [step, setStep] = useState<FormStep>(1)
   const [date, setDate] = useState<string>(todayAsDateInputValue)
   const [physical, setPhysical] = useState<number>(DEFAULT_LEVEL)
   const [mental, setMental] = useState<number>(DEFAULT_LEVEL)
   const [emotional, setEmotional] = useState<number>(DEFAULT_LEVEL)
+  const [sleepQuality, setSleepQuality] = useState<number>(DEFAULT_CONTEXT_LEVEL)
+  const [stressLevel, setStressLevel] = useState<number>(DEFAULT_CONTEXT_LEVEL)
+  const [physicalActivity, setPhysicalActivity] = useState<string>('')
+  const [nutrition, setNutrition] = useState<string>('')
+  const [socialInteractions, setSocialInteractions] = useState<string>('')
+  const [timeOutdoors, setTimeOutdoors] = useState<string>('')
+  const [notes, setNotes] = useState<string>('')
   const [status, setStatus] = useState<PageStatus>('loading')
   const [hasExistingData, setHasExistingData] = useState<boolean>(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -50,6 +62,16 @@ export default function EnergyLevelsEditPage() {
     () => ({ date, physical, mental, emotional }),
     [date, physical, mental, emotional],
   )
+
+  const resetContextFields = useCallback(() => {
+    setSleepQuality(DEFAULT_CONTEXT_LEVEL)
+    setStressLevel(DEFAULT_CONTEXT_LEVEL)
+    setPhysicalActivity('')
+    setNutrition('')
+    setSocialInteractions('')
+    setTimeOutdoors('')
+    setNotes('')
+  }, [])
 
   const loadLevels = useCallback(async (selectedDate: string) => {
     const token = getIdToken()
@@ -72,11 +94,19 @@ export default function EnergyLevelsEditPage() {
         setPhysical(DEFAULT_LEVEL)
         setMental(DEFAULT_LEVEL)
         setEmotional(DEFAULT_LEVEL)
+        resetContextFields()
         setHasExistingData(false)
       } else {
         setPhysical(result.physical)
         setMental(result.mental)
         setEmotional(result.emotional)
+        setSleepQuality(result.sleepQuality ?? DEFAULT_CONTEXT_LEVEL)
+        setStressLevel(result.stressLevel ?? DEFAULT_CONTEXT_LEVEL)
+        setPhysicalActivity(result.physicalActivity ?? '')
+        setNutrition(result.nutrition ?? '')
+        setSocialInteractions(result.socialInteractions ?? '')
+        setTimeOutdoors(result.timeOutdoors ?? '')
+        setNotes(result.notes ?? '')
         setHasExistingData(true)
       }
     } catch (error) {
@@ -87,6 +117,7 @@ export default function EnergyLevelsEditPage() {
       setPhysical(DEFAULT_LEVEL)
       setMental(DEFAULT_LEVEL)
       setEmotional(DEFAULT_LEVEL)
+      resetContextFields()
       setHasExistingData(false)
       setLoadError('Could not load data for this date. Please try again.')
     } finally {
@@ -94,7 +125,7 @@ export default function EnergyLevelsEditPage() {
         setStatus('idle')
       }
     }
-  }, [])
+  }, [resetContextFields])
 
   useEffect(() => {
     void loadLevels(date)
@@ -174,6 +205,14 @@ export default function EnergyLevelsEditPage() {
 
         <CardContent className="energy-edit-card-content">
           <hr className="energy-edit-header-divider" aria-hidden="true" />
+          <StepIndicator
+            currentStep={step}
+            onStepClick={(targetStep) => {
+              if (targetStep === 1) {
+                setStep(1)
+              }
+            }}
+          />
           <div className="energy-edit-date-section">
             <label htmlFor="energy-date" className="energy-edit-date-label">
               DATE
@@ -198,6 +237,8 @@ export default function EnergyLevelsEditPage() {
                 className="energy-edit-date-input"
                 value={date}
                 onChange={(event) => {
+                  setStep(1)
+                  resetContextFields()
                   setDate(event.target.value)
                 }}
                 aria-label="Date"
@@ -232,50 +273,88 @@ export default function EnergyLevelsEditPage() {
 
           {status === 'loading' && <p className="energy-loading">Loading energy levels...</p>}
 
-          <EnergySection
-            label="Physical"
-            color="#c4826d"
-            value={physical}
-            onChange={setPhysical}
-            disabled={isBusy}
-          />
-          <EnergySection
-            label="Mental"
-            color="#7eb8b3"
-            value={mental}
-            onChange={setMental}
-            disabled={isBusy}
-          />
-          <EnergySection
-            label="Emotional"
-            color="#8fa58b"
-            value={emotional}
-            onChange={setEmotional}
-            showDivider={false}
-            disabled={isBusy}
-          />
+          {step === 1 ? (
+            <>
+              <EnergySection
+                label="Physical"
+                color="#c4826d"
+                value={physical}
+                onChange={setPhysical}
+                disabled={isBusy}
+              />
+              <EnergySection
+                label="Mental"
+                color="#7eb8b3"
+                value={mental}
+                onChange={setMental}
+                disabled={isBusy}
+              />
+              <EnergySection
+                label="Emotional"
+                color="#8fa58b"
+                value={emotional}
+                onChange={setEmotional}
+                showDivider={false}
+                disabled={isBusy}
+              />
 
-          <div className="energy-edit-actions">
-            <button
-              type="button"
-              className="energy-save-btn"
-              disabled={status === 'loading' || status === 'saving'}
-              aria-disabled={status === 'loading' || status === 'saving'}
-              onClick={() => {
-                void handleSave()
-              }}
-            >
-              {status === 'saving' ? 'Saving…' : 'Save Energy Levels'}
-            </button>
-            {saveError && <p className="energy-save-error">{saveError}</p>}
-            <button
-              className="energy-cancel-link"
-              type="button"
-              onClick={goBack}
-            >
-              Cancel
-            </button>
-          </div>
+              <div className="energy-edit-actions">
+                <button
+                  type="button"
+                  className="energy-save-btn"
+                  disabled={status === 'loading'}
+                  aria-disabled={status === 'loading'}
+                  onClick={() => {
+                    setStep(2)
+                  }}
+                >
+                  Next Step →
+                </button>
+                <button
+                  className="energy-cancel-link"
+                  type="button"
+                  onClick={goBack}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="energy-edit-step-two">
+              <h2 className="energy-context-title">Daily Context</h2>
+              <p className="energy-context-subtitle">
+                Help us understand what shaped your energy today
+              </p>
+              <p className="energy-context-preview">
+                Sleep {sleepQuality} · Stress {stressLevel} · Activity{' '}
+                {physicalActivity || '—'} · Nutrition {nutrition || '—'} · Social{' '}
+                {socialInteractions || '—'} · Outdoors {timeOutdoors || '—'} · Notes{' '}
+                {notes || '—'}
+              </p>
+              <div className="energy-edit-actions">
+                <button
+                  type="button"
+                  className="energy-context-previous-link"
+                  onClick={() => setStep(1)}
+                  disabled={status === 'saving'}
+                >
+                  ← Previous Step
+                </button>
+                <button
+                  type="button"
+                  className="energy-save-btn"
+                  disabled={status === 'loading' || status === 'saving'}
+                  aria-disabled={status === 'loading' || status === 'saving'}
+                  onClick={() => {
+                    void handleSave()
+                  }}
+                >
+                  {status === 'saving' ? 'Saving…' : 'Save Entry'}
+                </button>
+                {saveError && <p className="energy-save-error">{saveError}</p>}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
