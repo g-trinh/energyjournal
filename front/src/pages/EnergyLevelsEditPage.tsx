@@ -106,11 +106,11 @@ export default function EnergyLevelsEditPage() {
       emotional,
       sleepQuality,
       stressLevel,
-      physicalActivity: physicalActivity || undefined,
-      nutrition: nutrition || undefined,
-      socialInteractions: socialInteractions || undefined,
-      timeOutdoors: timeOutdoors || undefined,
-      notes: notes || undefined,
+      physicalActivity: physicalActivity !== '' ? physicalActivity : undefined,
+      nutrition: nutrition !== '' ? nutrition : undefined,
+      socialInteractions: socialInteractions !== '' ? socialInteractions : undefined,
+      timeOutdoors: timeOutdoors !== '' ? timeOutdoors : undefined,
+      notes: notes !== '' ? notes : undefined,
     }),
     [
       date,
@@ -127,7 +127,7 @@ export default function EnergyLevelsEditPage() {
     ],
   )
 
-  const resetContextFields = useCallback(() => {
+  function resetContextFields() {
     setSleepQuality(DEFAULT_CONTEXT_LEVEL)
     setStressLevel(DEFAULT_CONTEXT_LEVEL)
     setPhysicalActivity('')
@@ -135,7 +135,7 @@ export default function EnergyLevelsEditPage() {
     setSocialInteractions('')
     setTimeOutdoors('')
     setNotes('')
-  }, [])
+  }
 
   const loadLevels = useCallback(async (selectedDate: string) => {
     const token = getIdToken()
@@ -189,7 +189,7 @@ export default function EnergyLevelsEditPage() {
         setStatus('idle')
       }
     }
-  }, [resetContextFields])
+  }, [])
 
   useEffect(() => {
     void loadLevels(date)
@@ -345,6 +345,7 @@ export default function EnergyLevelsEditPage() {
           )}
 
           {status === 'loading' && <p className="energy-loading">Loading energy levels...</p>}
+          {saveError && <p className="energy-save-error">{saveError}</p>}
 
           {step === 1 ? (
             <>
@@ -507,7 +508,6 @@ export default function EnergyLevelsEditPage() {
                   {status === 'saving' ? 'Saving…' : 'Save Entry'}
                 </button>
               </div>
-              {saveError && <p className="energy-save-error">{saveError}</p>}
             </div>
           )}
         </CardContent>

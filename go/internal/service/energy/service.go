@@ -98,10 +98,10 @@ func (s *service) Save(ctx context.Context, levels domain.EnergyLevels) error {
 	if err := validateLevel("emotional", levels.Emotional); err != nil {
 		return err
 	}
-	if err := validateOptionalScaleField("sleepQuality", levels.SleepQuality); err != nil {
+	if err := validateScaleField("sleepQuality", levels.SleepQuality); err != nil {
 		return err
 	}
-	if err := validateOptionalScaleField("stressLevel", levels.StressLevel); err != nil {
+	if err := validateScaleField("stressLevel", levels.StressLevel); err != nil {
 		return err
 	}
 	if err := validateOptionalEnumField("physicalActivity", levels.PhysicalActivity, physicalActivityValues); err != nil {
@@ -159,9 +159,9 @@ func validateLevel(field string, value int) error {
 	return nil
 }
 
-func validateOptionalScaleField(field string, value *int) error {
+func validateScaleField(field string, value *int) error {
 	if value == nil {
-		return nil
+		return pkgerror.NewInputValidationError(field, "is required")
 	}
 	if *value < 1 || *value > 5 {
 		return pkgerror.NewInputValidationError(field, "must be between 1 and 5")

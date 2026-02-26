@@ -198,12 +198,14 @@ func TestService_Save_ValidInputSetsUpdatedAtAndDelegates(t *testing.T) {
 
 	createdAt := time.Date(2026, 2, 20, 9, 0, 0, 0, time.UTC)
 	err := svc.Save(context.Background(), energy.EnergyLevels{
-		UID:       "uid-1",
-		Date:      "2026-02-21",
-		Physical:  7,
-		Mental:    5,
-		Emotional: 8,
-		CreatedAt: createdAt,
+		UID:          "uid-1",
+		Date:         "2026-02-21",
+		Physical:     7,
+		Mental:       5,
+		Emotional:    8,
+		SleepQuality: intPtr(3),
+		StressLevel:  intPtr(3),
+		CreatedAt:    createdAt,
 	})
 	if err != nil {
 		t.Fatalf("expected nil error, got %v", err)
@@ -329,12 +331,17 @@ func TestService_Save_SleepQualityValidation(t *testing.T) {
 	}
 
 	err := svc.Save(context.Background(), base)
-	if err != nil {
-		t.Fatalf("expected nil sleepQuality to pass, got %v", err)
+	if err == nil {
+		t.Fatal("expected error for nil sleepQuality, got nil")
+	}
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
 	}
 
 	withFive := base
 	withFive.SleepQuality = intPtr(5)
+	withFive.StressLevel = intPtr(3)
 	err = svc.Save(context.Background(), withFive)
 	if err != nil {
 		t.Fatalf("expected sleepQuality=5 to pass, got %v", err)
@@ -342,12 +349,11 @@ func TestService_Save_SleepQualityValidation(t *testing.T) {
 
 	withSix := base
 	withSix.SleepQuality = intPtr(6)
+	withSix.StressLevel = intPtr(3)
 	err = svc.Save(context.Background(), withSix)
 	if err == nil {
 		t.Fatal("expected error for sleepQuality=6, got nil")
 	}
-
-	var validationErr *pkgerror.InputValidationError
 	if !errors.As(err, &validationErr) {
 		t.Fatalf("expected InputValidationError, got %T", err)
 	}
@@ -365,11 +371,13 @@ func TestService_Save_PropagatesRepositoryErrors(t *testing.T) {
 	svc := NewEnergyService(repo)
 
 	err := svc.Save(context.Background(), energy.EnergyLevels{
-		UID:       "uid-1",
-		Date:      "2026-02-21",
-		Physical:  7,
-		Mental:    5,
-		Emotional: 8,
+		UID:          "uid-1",
+		Date:         "2026-02-21",
+		Physical:     7,
+		Mental:       5,
+		Emotional:    8,
+		SleepQuality: intPtr(3),
+		StressLevel:  intPtr(3),
 	})
 	if !errors.Is(err, repoErr) {
 		t.Fatalf("expected %v, got %v", repoErr, err)
