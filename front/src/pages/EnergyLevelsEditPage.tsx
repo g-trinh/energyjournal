@@ -11,6 +11,7 @@ import {
   type EnergyLevels,
 } from '@/services/energyLevels'
 import EnergySection from '@/components/energy/EnergySection'
+import ContextSelect from '@/components/energy/ContextSelect'
 import StepIndicator from '@/components/energy/StepIndicator'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -21,9 +22,45 @@ import '@/styles/energy-context.css'
 
 type PageStatus = 'loading' | 'idle' | 'saving'
 type FormStep = 1 | 2
+type ContextSelectID =
+  | 'physicalActivity'
+  | 'nutrition'
+  | 'socialInteractions'
+  | 'timeOutdoors'
 
 const DEFAULT_LEVEL = 5
 const DEFAULT_CONTEXT_LEVEL = 3
+
+const PHYSICAL_ACTIVITY_OPTIONS = [
+  { value: '', label: '—' },
+  { value: 'none', label: 'None' },
+  { value: 'light', label: 'Light' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'intense', label: 'Intense' },
+]
+
+const NUTRITION_OPTIONS = [
+  { value: '', label: '—' },
+  { value: 'poor', label: 'Poor quality' },
+  { value: 'average', label: 'Average quality' },
+  { value: 'good', label: 'Good quality' },
+  { value: 'excellent', label: 'Excellent quality' },
+]
+
+const SOCIAL_INTERACTIONS_OPTIONS = [
+  { value: '', label: '—' },
+  { value: 'negative', label: 'Negative' },
+  { value: 'neutral', label: 'Neutral' },
+  { value: 'positive', label: 'Positive' },
+]
+
+const TIME_OUTDOORS_OPTIONS = [
+  { value: '', label: '—' },
+  { value: 'none', label: 'None' },
+  { value: 'under_30min', label: 'Under 30 min' },
+  { value: '30min_1hr', label: '30 min-1 hr' },
+  { value: 'over_1hr', label: 'Over 1 hr' },
+]
 
 function todayAsDateInputValue(): string {
   return new Date().toLocaleDateString('en-CA')
@@ -52,6 +89,9 @@ export default function EnergyLevelsEditPage() {
   const [timeOutdoors, setTimeOutdoors] = useState<string>('')
   const [notes, setNotes] = useState<string>('')
   const [status, setStatus] = useState<PageStatus>('loading')
+  const [openContextSelect, setOpenContextSelect] = useState<ContextSelectID | null>(
+    null,
+  )
   const [hasExistingData, setHasExistingData] = useState<boolean>(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -175,6 +215,7 @@ export default function EnergyLevelsEditPage() {
   }
 
   const isBusy = status === 'loading'
+  const isContextDisabled = status !== 'idle'
 
   function goBack() {
     navigate('/energy/levels')
@@ -239,6 +280,7 @@ export default function EnergyLevelsEditPage() {
                 onChange={(event) => {
                   setStep(1)
                   resetContextFields()
+                  setOpenContextSelect(null)
                   setDate(event.target.value)
                 }}
                 aria-label="Date"
@@ -325,16 +367,98 @@ export default function EnergyLevelsEditPage() {
               <p className="energy-context-subtitle">
                 Help us understand what shaped your energy today
               </p>
-              <p className="energy-context-preview">
-                Sleep {sleepQuality} · Stress {stressLevel} · Activity{' '}
-                {physicalActivity || '—'} · Nutrition {nutrition || '—'} · Social{' '}
-                {socialInteractions || '—'} · Outdoors {timeOutdoors || '—'} · Notes{' '}
-                {notes || '—'}
-              </p>
-              <div className="energy-edit-actions">
+              <hr className="energy-context-divider" aria-hidden="true" />
+
+              <EnergySection
+                label="Sleep Quality"
+                color="#7eb8b3"
+                value={sleepQuality}
+                onChange={setSleepQuality}
+                min={1}
+                max={5}
+                disabled={isContextDisabled}
+              />
+              <EnergySection
+                label="Stress Level"
+                color="#c4826d"
+                value={stressLevel}
+                onChange={setStressLevel}
+                min={1}
+                max={5}
+                showDivider={false}
+                disabled={isContextDisabled}
+              />
+
+              <hr className="energy-context-divider energy-context-divider-loose" aria-hidden="true" />
+
+              <div className="energy-context-select-grid">
+                <ContextSelect
+                  label="Physical Activity"
+                  options={PHYSICAL_ACTIVITY_OPTIONS}
+                  value={physicalActivity}
+                  onChange={setPhysicalActivity}
+                  disabled={isContextDisabled}
+                  isOpen={openContextSelect === 'physicalActivity'}
+                  onOpenChange={(open) =>
+                    setOpenContextSelect(open ? 'physicalActivity' : null)
+                  }
+                />
+                <ContextSelect
+                  label="Nutrition"
+                  options={NUTRITION_OPTIONS}
+                  value={nutrition}
+                  onChange={setNutrition}
+                  disabled={isContextDisabled}
+                  isOpen={openContextSelect === 'nutrition'}
+                  onOpenChange={(open) =>
+                    setOpenContextSelect(open ? 'nutrition' : null)
+                  }
+                />
+                <ContextSelect
+                  label="Social Interactions"
+                  options={SOCIAL_INTERACTIONS_OPTIONS}
+                  value={socialInteractions}
+                  onChange={setSocialInteractions}
+                  disabled={isContextDisabled}
+                  isOpen={openContextSelect === 'socialInteractions'}
+                  onOpenChange={(open) =>
+                    setOpenContextSelect(open ? 'socialInteractions' : null)
+                  }
+                />
+                <ContextSelect
+                  label="Time Outdoors"
+                  options={TIME_OUTDOORS_OPTIONS}
+                  value={timeOutdoors}
+                  onChange={setTimeOutdoors}
+                  disabled={isContextDisabled}
+                  isOpen={openContextSelect === 'timeOutdoors'}
+                  onOpenChange={(open) =>
+                    setOpenContextSelect(open ? 'timeOutdoors' : null)
+                  }
+                />
+              </div>
+
+              <hr className="energy-context-divider" aria-hidden="true" />
+
+              <div className="energy-context-notes">
+                <label htmlFor="daily-reflection" className="energy-context-label">
+                  Daily Reflection
+                </label>
+                <textarea
+                  id="daily-reflection"
+                  className="energy-context-textarea"
+                  placeholder="Write your thoughts about today…"
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value)}
+                  disabled={isContextDisabled}
+                  rows={5}
+                />
+              </div>
+
+              <div className="energy-context-actions">
                 <button
                   type="button"
-                  className="energy-context-previous-link"
+                  className="energy-context-previous-btn"
                   onClick={() => setStep(1)}
                   disabled={status === 'saving'}
                 >
@@ -342,7 +466,7 @@ export default function EnergyLevelsEditPage() {
                 </button>
                 <button
                   type="button"
-                  className="energy-save-btn"
+                  className="energy-save-btn energy-context-save-btn"
                   disabled={status === 'loading' || status === 'saving'}
                   aria-disabled={status === 'loading' || status === 'saving'}
                   onClick={() => {
@@ -351,8 +475,8 @@ export default function EnergyLevelsEditPage() {
                 >
                   {status === 'saving' ? 'Saving…' : 'Save Entry'}
                 </button>
-                {saveError && <p className="energy-save-error">{saveError}</p>}
               </div>
+              {saveError && <p className="energy-save-error">{saveError}</p>}
             </div>
           )}
         </CardContent>

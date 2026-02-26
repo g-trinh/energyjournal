@@ -50,7 +50,16 @@ export default function StepIndicator({
               '1'
             )}
           </button>
-          <span className="energy-step-label">ENERGY LEVELS</span>
+          <span
+            className={[
+              'energy-step-label',
+              isStepOneActive ? 'is-step-one-active' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            ENERGY LEVELS
+          </span>
         </div>
 
         <div className="energy-step-item energy-step-item-right">
@@ -72,7 +81,7 @@ export default function StepIndicator({
           <span
             className={[
               'energy-step-label',
-              isStepTwoActive ? 'is-active' : '',
+              isStepTwoActive ? 'is-step-two-active' : '',
             ]
               .filter(Boolean)
               .join(' ')}

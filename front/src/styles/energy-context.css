@@ -75,18 +75,14 @@
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: var(--color-text-secondary);
-}
-
-.energy-step-item-left .energy-step-label {
-  color: var(--color-text-secondary);
-}
-
-.energy-step-item-right .energy-step-label {
   color: var(--color-text-muted);
 }
 
-.energy-step-label.is-active {
+.energy-step-label.is-step-one-active {
+  color: var(--color-text-secondary);
+}
+
+.energy-step-label.is-step-two-active {
   color: var(--color-accent-amber);
   font-weight: 700;
 }
@@ -190,6 +186,7 @@
   flex-direction: column;
   z-index: 40;
   padding: 6px;
+  animation: contextSelectOpen var(--duration-fast) var(--ease-out-expo);
 }
 
 .energy-context-option {
@@ -222,7 +219,7 @@
 
 .energy-context-title {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.38rem;
   color: var(--color-text-primary);
 }
 
@@ -232,19 +229,147 @@
   font-size: 0.95rem;
 }
 
-.energy-context-preview {
-  margin-top: 16px;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
+.energy-context-divider {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 18px 0 22px;
 }
 
-.energy-context-previous-link {
-  border: 0;
+.energy-context-divider-loose {
+  margin: 22px 0 22px;
+}
+
+.energy-context-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 14px;
+}
+
+.energy-context-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.energy-context-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 116px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 164, 69, 0.25);
+  background: var(--color-bg-deep);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 12px 14px;
+  transition: border-color var(--duration-normal) var(--ease-out-expo),
+    box-shadow var(--duration-normal) var(--ease-out-expo),
+    opacity var(--duration-normal) var(--ease-out-expo);
+}
+
+.energy-context-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.energy-context-textarea:focus {
+  outline: none;
+  border-color: rgba(232, 164, 69, 0.56);
+  box-shadow: 0 0 0 3px rgba(232, 164, 69, 0.3);
+}
+
+.energy-context-textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.energy-context-actions {
+  margin-top: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.energy-context-save-btn {
+  width: auto;
+  min-width: 180px;
+  padding: 0 24px;
+}
+
+.energy-context-previous-btn {
+  min-height: 48px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 164, 69, 0.55);
   background: transparent;
-  color: var(--color-text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--color-accent-amber);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0 16px;
   cursor: pointer;
-  width: fit-content;
+  transition: border-color var(--duration-normal) var(--ease-out-expo),
+    box-shadow var(--duration-normal) var(--ease-out-expo),
+    opacity var(--duration-normal) var(--ease-out-expo);
+}
+
+.energy-context-previous-btn:hover:not(:disabled) {
+  border-color: var(--color-accent-amber);
+  box-shadow: 0 0 0 3px rgba(232, 164, 69, 0.18);
+}
+
+.energy-context-previous-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@keyframes contextSelectOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (max-width: 480px) {
+  .energy-context-title {
+    font-size: 1.15rem;
+  }
+
+  .energy-context-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .energy-context-select-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .energy-context-actions {
+    margin-top: 22px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .energy-context-save-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .energy-context-previous-btn {
+    min-height: auto;
+    border: 0;
+    background: transparent;
+    color: #6b665c;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    width: fit-content;
+    padding: 0;
+    align-self: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .energy-context-options {
+    animation: none;
+  }
 }
