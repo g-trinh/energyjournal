@@ -5,6 +5,13 @@ export interface EnergyLevels {
   physical: number
   mental: number
   emotional: number
+  sleepQuality?: number
+  stressLevel?: number
+  physicalActivity?: string
+  nutrition?: string
+  socialInteractions?: string
+  timeOutdoors?: string
+  notes?: string
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
@@ -69,8 +76,8 @@ export async function getEnergyLevels(
     throw new Error('failed_to_fetch_energy_levels')
   }
 
-  const payload: EnergyLevels = await response.json()
-  return payload
+  const payload = await response.json()
+  return parseEnergyLevels(payload)
 }
 
 export async function getEnergyLevelsRange(
@@ -94,27 +101,91 @@ export async function getEnergyLevelsRange(
     throw new Error('failed_to_fetch_energy_levels_range')
   }
 
-  const payload: EnergyLevels[] = await response.json()
-  return payload
+  const payload: unknown = await response.json()
+  if (!Array.isArray(payload)) {
+    return []
+  }
+  return payload.map(parseEnergyLevels)
 }
 
 export async function saveEnergyLevels(
   levels: EnergyLevels,
   token: string,
 ): Promise<EnergyLevels> {
+  const body: EnergyLevels = {
+    date: levels.date,
+    physical: levels.physical,
+    mental: levels.mental,
+    emotional: levels.emotional,
+  }
+
+  if (levels.sleepQuality !== undefined && levels.sleepQuality !== 0) {
+    body.sleepQuality = levels.sleepQuality
+  }
+  if (levels.stressLevel !== undefined && levels.stressLevel !== 0) {
+    body.stressLevel = levels.stressLevel
+  }
+  if (levels.physicalActivity) {
+    body.physicalActivity = levels.physicalActivity
+  }
+  if (levels.nutrition) {
+    body.nutrition = levels.nutrition
+  }
+  if (levels.socialInteractions) {
+    body.socialInteractions = levels.socialInteractions
+  }
+  if (levels.timeOutdoors) {
+    body.timeOutdoors = levels.timeOutdoors
+  }
+  if (levels.notes) {
+    body.notes = levels.notes
+  }
+
   const response = await fetch(`${API_BASE}/energy/levels`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(levels),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
     throw new Error('failed_to_save_energy_levels')
   }
 
-  const payload: EnergyLevels = await response.json()
-  return payload
+  const payload = await response.json()
+  return parseEnergyLevels(payload)
+}
+
+function parseEnergyLevels(payload: unknown): EnergyLevels {
+  const data = payload as Partial<EnergyLevels>
+
+  return {
+    date: data.date ?? '',
+    physical: data.physical ?? 0,
+    mental: data.mental ?? 0,
+    emotional: data.emotional ?? 0,
+    sleepQuality: normalizeOptionalNumber(data.sleepQuality),
+    stressLevel: normalizeOptionalNumber(data.stressLevel),
+    physicalActivity: normalizeOptionalString(data.physicalActivity),
+    nutrition: normalizeOptionalString(data.nutrition),
+    socialInteractions: normalizeOptionalString(data.socialInteractions),
+    timeOutdoors: normalizeOptionalString(data.timeOutdoors),
+    notes: normalizeOptionalString(data.notes),
+  }
+}
+
+function normalizeOptionalNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number' || value === 0) {
+    return undefined
+  }
+  return value
+}
+
+function normalizeOptionalString(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value === '') {
+    return undefined
+  }
+  return value
 }
