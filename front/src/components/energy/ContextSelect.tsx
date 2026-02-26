@@ -1,11 +1,5 @@
-import {
-  KeyboardEvent,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 
 export interface ContextSelectOption {
   value: string
@@ -47,12 +41,15 @@ export default function ContextSelect({
   const displayedLabel =
     options.find((option) => option.value === value)?.label ?? '\u2014'
 
-  function setOpen(nextOpen: boolean) {
-    if (!isControlled) {
-      setInternalOpen(nextOpen)
-    }
-    onOpenChange?.(nextOpen)
-  }
+  const setOpen = useCallback(
+    (nextOpen: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(nextOpen)
+      }
+      onOpenChange?.(nextOpen)
+    },
+    [isControlled, onOpenChange],
+  )
 
   function openSelect() {
     if (disabled) {
@@ -63,10 +60,10 @@ export default function ContextSelect({
     setOpen(true)
   }
 
-  function closeSelect() {
+  const closeSelect = useCallback(() => {
     setOpen(false)
     setActiveIndex(-1)
-  }
+  }, [setOpen])
 
   function moveActive(delta: number) {
     if (options.length === 0) {
@@ -179,7 +176,7 @@ export default function ContextSelect({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [open])
+  }, [closeSelect, open])
 
   return (
     <div className="energy-context-select" ref={containerRef}>
