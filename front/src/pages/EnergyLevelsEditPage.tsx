@@ -99,8 +99,32 @@ export default function EnergyLevelsEditPage() {
   const fetchAbortRef = useRef<AbortController | null>(null)
 
   const levels = useMemo<EnergyLevels>(
-    () => ({ date, physical, mental, emotional }),
-    [date, physical, mental, emotional],
+    () => ({
+      date,
+      physical,
+      mental,
+      emotional,
+      sleepQuality,
+      stressLevel,
+      physicalActivity: physicalActivity || undefined,
+      nutrition: nutrition || undefined,
+      socialInteractions: socialInteractions || undefined,
+      timeOutdoors: timeOutdoors || undefined,
+      notes: notes || undefined,
+    }),
+    [
+      date,
+      emotional,
+      mental,
+      notes,
+      nutrition,
+      physical,
+      physicalActivity,
+      sleepQuality,
+      socialInteractions,
+      stressLevel,
+      timeOutdoors,
+    ],
   )
 
   const resetContextFields = useCallback(() => {
@@ -203,6 +227,13 @@ export default function EnergyLevelsEditPage() {
       setPhysical(saved.physical)
       setMental(saved.mental)
       setEmotional(saved.emotional)
+      setSleepQuality(saved.sleepQuality ?? DEFAULT_CONTEXT_LEVEL)
+      setStressLevel(saved.stressLevel ?? DEFAULT_CONTEXT_LEVEL)
+      setPhysicalActivity(saved.physicalActivity ?? '')
+      setNutrition(saved.nutrition ?? '')
+      setSocialInteractions(saved.socialInteractions ?? '')
+      setTimeOutdoors(saved.timeOutdoors ?? '')
+      setNotes(saved.notes ?? '')
       setHasExistingData(true)
       setToastData(saved)
       clearEnergyLevelsRangeCache()
