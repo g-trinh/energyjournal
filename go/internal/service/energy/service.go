@@ -11,6 +11,33 @@ import (
 
 var datePattern = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
+var physicalActivityValues = map[string]struct{}{
+	"none":     {},
+	"light":    {},
+	"moderate": {},
+	"intense":  {},
+}
+
+var nutritionValues = map[string]struct{}{
+	"poor":      {},
+	"average":   {},
+	"good":      {},
+	"excellent": {},
+}
+
+var socialInteractionValues = map[string]struct{}{
+	"negative": {},
+	"neutral":  {},
+	"positive": {},
+}
+
+var timeOutdoorsValues = map[string]struct{}{
+	"none":        {},
+	"under_30min": {},
+	"30min_1hr":   {},
+	"over_1hr":    {},
+}
+
 type service struct {
 	repo    domain.EnergyRepository
 	timeNow func() time.Time
@@ -71,6 +98,24 @@ func (s *service) Save(ctx context.Context, levels domain.EnergyLevels) error {
 	if err := validateLevel("emotional", levels.Emotional); err != nil {
 		return err
 	}
+	if err := validateOptionalScaleField("sleepQuality", levels.SleepQuality); err != nil {
+		return err
+	}
+	if err := validateOptionalScaleField("stressLevel", levels.StressLevel); err != nil {
+		return err
+	}
+	if err := validateOptionalEnumField("physicalActivity", levels.PhysicalActivity, physicalActivityValues); err != nil {
+		return err
+	}
+	if err := validateOptionalEnumField("nutrition", levels.Nutrition, nutritionValues); err != nil {
+		return err
+	}
+	if err := validateOptionalEnumField("socialInteractions", levels.SocialInteractions, socialInteractionValues); err != nil {
+		return err
+	}
+	if err := validateOptionalEnumField("timeOutdoors", levels.TimeOutdoors, timeOutdoorsValues); err != nil {
+		return err
+	}
 
 	levels.UpdatedAt = s.timeNow()
 	return s.repo.Upsert(ctx, levels)
@@ -110,6 +155,26 @@ func parseDate(date string) (time.Time, bool) {
 func validateLevel(field string, value int) error {
 	if value < 0 || value > 10 {
 		return pkgerror.NewInputValidationError(field, "must be between 0 and 10")
+	}
+	return nil
+}
+
+func validateOptionalScaleField(field string, value *int) error {
+	if value == nil {
+		return nil
+	}
+	if *value < 1 || *value > 5 {
+		return pkgerror.NewInputValidationError(field, "must be between 1 and 5")
+	}
+	return nil
+}
+
+func validateOptionalEnumField(field, value string, allowed map[string]struct{}) error {
+	if value == "" {
+		return nil
+	}
+	if _, ok := allowed[value]; !ok {
+		return pkgerror.NewInputValidationError(field, "invalid value")
 	}
 	return nil
 }

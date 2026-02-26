@@ -49,10 +49,17 @@ func (h *EnergyHandler) GetLevels(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, EnergyLevelsResponse{
-		Date:      levels.Date,
-		Physical:  levels.Physical,
-		Mental:    levels.Mental,
-		Emotional: levels.Emotional,
+		Date:               levels.Date,
+		Physical:           levels.Physical,
+		Mental:             levels.Mental,
+		Emotional:          levels.Emotional,
+		SleepQuality:       levels.SleepQuality,
+		StressLevel:        levels.StressLevel,
+		PhysicalActivity:   levels.PhysicalActivity,
+		Nutrition:          levels.Nutrition,
+		SocialInteractions: levels.SocialInteractions,
+		TimeOutdoors:       levels.TimeOutdoors,
+		Notes:              levels.Notes,
 	})
 }
 
@@ -88,10 +95,17 @@ func (h *EnergyHandler) GetLevelsByRange(w http.ResponseWriter, r *http.Request)
 	response := make([]EnergyLevelsResponse, 0, len(levels))
 	for _, level := range levels {
 		response = append(response, EnergyLevelsResponse{
-			Date:      level.Date,
-			Physical:  level.Physical,
-			Mental:    level.Mental,
-			Emotional: level.Emotional,
+			Date:               level.Date,
+			Physical:           level.Physical,
+			Mental:             level.Mental,
+			Emotional:          level.Emotional,
+			SleepQuality:       level.SleepQuality,
+			StressLevel:        level.StressLevel,
+			PhysicalActivity:   level.PhysicalActivity,
+			Nutrition:          level.Nutrition,
+			SocialInteractions: level.SocialInteractions,
+			TimeOutdoors:       level.TimeOutdoors,
+			Notes:              level.Notes,
 		})
 	}
 
@@ -125,11 +139,18 @@ func (h *EnergyHandler) SaveLevels(w http.ResponseWriter, r *http.Request) {
 	}
 
 	levels := energy.EnergyLevels{
-		UID:       u.UID,
-		Date:      req.Date,
-		Physical:  req.Physical,
-		Mental:    req.Mental,
-		Emotional: req.Emotional,
+		UID:                u.UID,
+		Date:               req.Date,
+		Physical:           req.Physical,
+		Mental:             req.Mental,
+		Emotional:          req.Emotional,
+		SleepQuality:       req.SleepQuality,
+		StressLevel:        req.StressLevel,
+		PhysicalActivity:   req.PhysicalActivity,
+		Nutrition:          req.Nutrition,
+		SocialInteractions: req.SocialInteractions,
+		TimeOutdoors:       req.TimeOutdoors,
+		Notes:              req.Notes,
 	}
 	if err := h.service.Save(r.Context(), levels); err != nil {
 		writeDomainError(w, err)
@@ -137,10 +158,17 @@ func (h *EnergyHandler) SaveLevels(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, EnergyLevelsResponse{
-		Date:      req.Date,
-		Physical:  req.Physical,
-		Mental:    req.Mental,
-		Emotional: req.Emotional,
+		Date:               req.Date,
+		Physical:           req.Physical,
+		Mental:             req.Mental,
+		Emotional:          req.Emotional,
+		SleepQuality:       req.SleepQuality,
+		StressLevel:        req.StressLevel,
+		PhysicalActivity:   req.PhysicalActivity,
+		Nutrition:          req.Nutrition,
+		SocialInteractions: req.SocialInteractions,
+		TimeOutdoors:       req.TimeOutdoors,
+		Notes:              req.Notes,
 	})
 }
 

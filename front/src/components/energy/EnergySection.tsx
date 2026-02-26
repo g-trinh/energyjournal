@@ -7,6 +7,8 @@ interface EnergySectionProps {
   onChange: (value: number) => void
   showDivider?: boolean
   disabled?: boolean
+  min?: number
+  max?: number
 }
 
 export default function EnergySection({
@@ -16,6 +18,8 @@ export default function EnergySection({
   onChange,
   showDivider = true,
   disabled = false,
+  min = 0,
+  max = 10,
 }: EnergySectionProps) {
   return (
     <section className="energy-section">
@@ -32,7 +36,7 @@ export default function EnergySection({
           <span className="energy-section-value-number" style={{ color }}>
             {value}
           </span>
-          <span className="energy-section-value-max">/ 10</span>
+          <span className="energy-section-value-max">/ {max}</span>
         </div>
       </div>
 
@@ -42,6 +46,8 @@ export default function EnergySection({
         ariaLabel={`${label} energy level`}
         onChange={onChange}
         disabled={disabled}
+        min={min}
+        max={max}
       />
 
       {showDivider && <hr className="energy-section-divider" />}

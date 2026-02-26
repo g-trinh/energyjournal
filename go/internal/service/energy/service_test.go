@@ -266,6 +266,93 @@ func TestService_Save_MalformedDateReturnsValidationError(t *testing.T) {
 	}
 }
 
+func TestService_Save_ContextEnumsValidPass(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	err := svc.Save(context.Background(), energy.EnergyLevels{
+		UID:                "uid-1",
+		Date:               "2026-02-21",
+		Physical:           4,
+		Mental:             5,
+		Emotional:          6,
+		SleepQuality:       intPtr(5),
+		StressLevel:        intPtr(1),
+		PhysicalActivity:   "moderate",
+		Nutrition:          "good",
+		SocialInteractions: "positive",
+		TimeOutdoors:       "30min_1hr",
+	})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+}
+
+func TestService_Save_InvalidContextEnumReturnsValidationError(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	err := svc.Save(context.Background(), energy.EnergyLevels{
+		UID:              "uid-1",
+		Date:             "2026-02-21",
+		Physical:         4,
+		Mental:           5,
+		Emotional:        6,
+		PhysicalActivity: "sprint",
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
+func TestService_Save_SleepQualityValidation(t *testing.T) {
+	t.Parallel()
+
+	repo := &mockEnergyRepository{}
+	svc := NewEnergyService(repo)
+
+	base := energy.EnergyLevels{
+		UID:       "uid-1",
+		Date:      "2026-02-21",
+		Physical:  4,
+		Mental:    5,
+		Emotional: 6,
+	}
+
+	err := svc.Save(context.Background(), base)
+	if err != nil {
+		t.Fatalf("expected nil sleepQuality to pass, got %v", err)
+	}
+
+	withFive := base
+	withFive.SleepQuality = intPtr(5)
+	err = svc.Save(context.Background(), withFive)
+	if err != nil {
+		t.Fatalf("expected sleepQuality=5 to pass, got %v", err)
+	}
+
+	withSix := base
+	withSix.SleepQuality = intPtr(6)
+	err = svc.Save(context.Background(), withSix)
+	if err == nil {
+		t.Fatal("expected error for sleepQuality=6, got nil")
+	}
+
+	var validationErr *pkgerror.InputValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected InputValidationError, got %T", err)
+	}
+}
+
 func TestService_Save_PropagatesRepositoryErrors(t *testing.T) {
 	t.Parallel()
 
@@ -288,6 +375,8 @@ func TestService_Save_PropagatesRepositoryErrors(t *testing.T) {
 		t.Fatalf("expected %v, got %v", repoErr, err)
 	}
 }
+
+func intPtr(n int) *int { return &n }
 
 type mockEnergyRepository struct {
 	getByDate      func(ctx context.Context, uid, date string) (*energy.EnergyLevels, error)
