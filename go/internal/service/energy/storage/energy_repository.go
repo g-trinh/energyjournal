@@ -39,13 +39,20 @@ func (r *FirestoreEnergyRepository) GetByDate(ctx context.Context, uid, date str
 
 	data := snapshot.Data()
 	return &energy.EnergyLevels{
-		UID:       getString(data, "uid"),
-		Date:      getString(data, "date"),
-		Physical:  getInt(data, "physical"),
-		Mental:    getInt(data, "mental"),
-		Emotional: getInt(data, "emotional"),
-		CreatedAt: getTimestamp(data, "createdAt"),
-		UpdatedAt: getTimestamp(data, "updatedAt"),
+		UID:                getString(data, "uid"),
+		Date:               getString(data, "date"),
+		Physical:           getInt(data, "physical"),
+		Mental:             getInt(data, "mental"),
+		Emotional:          getInt(data, "emotional"),
+		SleepQuality:       getInt(data, "sleepQuality"),
+		StressLevel:        getInt(data, "stressLevel"),
+		PhysicalActivity:   getString(data, "physicalActivity"),
+		Nutrition:          getString(data, "nutrition"),
+		SocialInteractions: getString(data, "socialInteractions"),
+		TimeOutdoors:       getString(data, "timeOutdoors"),
+		Notes:              getString(data, "notes"),
+		CreatedAt:          getTimestamp(data, "createdAt"),
+		UpdatedAt:          getTimestamp(data, "updatedAt"),
 	}, nil
 }
 
@@ -72,13 +79,20 @@ func (r *FirestoreEnergyRepository) GetByDateRange(ctx context.Context, uid, fro
 		}
 		data := doc.Data()
 		levels = append(levels, energy.EnergyLevels{
-			UID:       getString(data, "uid"),
-			Date:      getString(data, "date"),
-			Physical:  getInt(data, "physical"),
-			Mental:    getInt(data, "mental"),
-			Emotional: getInt(data, "emotional"),
-			CreatedAt: getTimestamp(data, "createdAt"),
-			UpdatedAt: getTimestamp(data, "updatedAt"),
+			UID:                getString(data, "uid"),
+			Date:               getString(data, "date"),
+			Physical:           getInt(data, "physical"),
+			Mental:             getInt(data, "mental"),
+			Emotional:          getInt(data, "emotional"),
+			SleepQuality:       getInt(data, "sleepQuality"),
+			StressLevel:        getInt(data, "stressLevel"),
+			PhysicalActivity:   getString(data, "physicalActivity"),
+			Nutrition:          getString(data, "nutrition"),
+			SocialInteractions: getString(data, "socialInteractions"),
+			TimeOutdoors:       getString(data, "timeOutdoors"),
+			Notes:              getString(data, "notes"),
+			CreatedAt:          getTimestamp(data, "createdAt"),
+			UpdatedAt:          getTimestamp(data, "updatedAt"),
 		})
 	}
 
@@ -105,13 +119,20 @@ func (r *FirestoreEnergyRepository) Upsert(ctx context.Context, levels energy.En
 	}
 
 	_, err = docRef.Set(ctx, map[string]any{
-		"uid":       levels.UID,
-		"date":      levels.Date,
-		"physical":  levels.Physical,
-		"mental":    levels.Mental,
-		"emotional": levels.Emotional,
-		"createdAt": createdAt,
-		"updatedAt": r.timeNow(),
+		"uid":                levels.UID,
+		"date":               levels.Date,
+		"physical":           levels.Physical,
+		"mental":             levels.Mental,
+		"emotional":          levels.Emotional,
+		"sleepQuality":       levels.SleepQuality,
+		"stressLevel":        levels.StressLevel,
+		"physicalActivity":   levels.PhysicalActivity,
+		"nutrition":          levels.Nutrition,
+		"socialInteractions": levels.SocialInteractions,
+		"timeOutdoors":       levels.TimeOutdoors,
+		"notes":              levels.Notes,
+		"createdAt":          createdAt,
+		"updatedAt":          r.timeNow(),
 	})
 	return err
 }
