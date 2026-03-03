@@ -44,7 +44,7 @@ func (s *stubCalendarService) GetSpending(ctx context.Context, uid string, start
 func TestStatusHandlerResponseShape(t *testing.T) {
 	t.Parallel()
 
-	handler := NewStatusHandler(&stubCalendarService{
+	handler := NewCalendarHandler(&stubCalendarService{
 		getStatus: func(ctx context.Context, uid string) (calendar.ConnectionStatus, error) {
 			return calendar.StatusConnected, nil
 		},
@@ -97,7 +97,7 @@ func TestCalendarsSetConnectionParsesRequest(t *testing.T) {
 	t.Parallel()
 
 	captured := ""
-	handler := NewCalendarsHandler(&stubCalendarService{
+	handler := NewCalendarHandler(&stubCalendarService{
 		setCalendar: func(ctx context.Context, uid, calendarID string) error {
 			captured = calendarID
 			return nil

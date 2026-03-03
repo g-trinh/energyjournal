@@ -9,12 +9,37 @@ import (
 	"energyjournal/internal/server/middleware"
 )
 
-type CalendarsHandler struct {
+type CalendarHandler struct {
 	service calendar.CalendarService
 }
 
-func NewCalendarsHandler(service calendar.CalendarService) *CalendarsHandler {
-	return &CalendarsHandler{service: service}
+func NewCalendarHandler(service calendar.CalendarService) *CalendarHandler {
+	return &CalendarHandler{service: service}
+}
+
+// GetStatus godoc
+// @Summary Get Google Calendar connection status
+// @Description Returns a tri-state status: disconnected (no OAuth), pending_selection (OAuth done, no calendar chosen), connected (ready).
+// @Tags calendar
+// @Security BearerAuth
+// @Success 200 {object} calendar.StatusResponse
+// @Failure 401 {object} calendar.ErrorResponse
+// @Failure 500 {object} calendar.ErrorResponse
+// @Router /calendar/status [get]
+func (h *CalendarHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
+	uid, ok := middleware.UIDFromContext(r.Context())
+	if !ok || uid == "" {
+		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	status, err := h.service.GetStatus(r.Context(), uid)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, StatusResponse{Status: status})
 }
 
 // GetCalendars godoc
@@ -26,7 +51,7 @@ func NewCalendarsHandler(service calendar.CalendarService) *CalendarsHandler {
 // @Failure 424 {object} calendar.ErrorResponse
 // @Failure 500 {object} calendar.ErrorResponse
 // @Router /calendar/calendars [get]
-func (h *CalendarsHandler) GetCalendars(w http.ResponseWriter, r *http.Request) {
+func (h *CalendarHandler) GetCalendars(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.UIDFromContext(r.Context())
 	if !ok || uid == "" {
 		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: "unauthorized"})
@@ -56,7 +81,7 @@ func (h *CalendarsHandler) GetCalendars(w http.ResponseWriter, r *http.Request) 
 // @Failure 424 {object} calendar.ErrorResponse
 // @Failure 500 {object} calendar.ErrorResponse
 // @Router /calendar/connection [put]
-func (h *CalendarsHandler) SetConnection(w http.ResponseWriter, r *http.Request) {
+func (h *CalendarHandler) SetConnection(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.UIDFromContext(r.Context())
 	if !ok || uid == "" {
 		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: "unauthorized"})

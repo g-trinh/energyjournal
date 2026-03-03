@@ -113,16 +113,15 @@ func register(mux *http.ServeMux, deps Dependencies) {
 	mux.HandleFunc("/healthz", health)
 
 	if deps.CalendarService != nil && deps.AuthMiddleware != nil {
-		statusHandler := calendarhandler.NewStatusHandler(deps.CalendarService)
+		calendarHandler := calendarhandler.NewCalendarHandler(deps.CalendarService)
 		oauthHandler := calendarhandler.NewOAuthHandler(deps.CalendarService, deps.FrontendBaseURL)
-		calendarsHandler := calendarhandler.NewCalendarsHandler(deps.CalendarService)
 		spendingHandler := calendarhandler.NewSpendingHandler(deps.CalendarService)
 
-		mux.Handle("GET /calendar/status", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(statusHandler.GetStatus)))
+		mux.Handle("GET /calendar/status", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(calendarHandler.GetStatus)))
 		mux.Handle("GET /calendar/auth", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(oauthHandler.GetAuthURL)))
 		mux.HandleFunc("GET /calendar/auth/callback", oauthHandler.Callback)
-		mux.Handle("GET /calendar/calendars", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(calendarsHandler.GetCalendars)))
-		mux.Handle("PUT /calendar/connection", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(calendarsHandler.SetConnection)))
+		mux.Handle("GET /calendar/calendars", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(calendarHandler.GetCalendars)))
+		mux.Handle("PUT /calendar/connection", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(calendarHandler.SetConnection)))
 		mux.Handle("GET /calendar/spending", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(spendingHandler.GetSpending)))
 	} else {
 		// Fail closed when auth middleware is unavailable.
