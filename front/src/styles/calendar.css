@@ -107,3 +107,86 @@
     width: 100%;
   }
 }
+
+.calendar-picker-shell {
+  animation: slideUp 0.8s var(--ease-out-expo) 0.1s both;
+}
+
+.calendar-picker-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(20px);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.calendar-picker-card h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--color-text-primary);
+}
+
+.calendar-picker-subtitle {
+  color: var(--color-text-secondary);
+}
+
+.calendar-picker-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.calendar-picker-controls label {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  width: 100%;
+}
+
+.calendar-picker-controls select {
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  padding: 0.72rem;
+  font-family: var(--font-body);
+}
+
+.calendar-picker-controls select:focus-visible {
+  outline: 3px solid rgba(232, 164, 69, 0.35);
+  outline-offset: 2px;
+}
+
+.calendar-picker-save {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.72rem 1rem;
+  min-width: 100px;
+  background: linear-gradient(135deg, var(--color-accent-amber) 0%, #d4923d 100%);
+  color: var(--color-bg-deep);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--duration-normal) var(--ease-out-expo), box-shadow var(--duration-normal) var(--ease-out-expo);
+}
+
+.calendar-picker-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), 0 0 20px rgba(232, 164, 69, 0.3);
+}
+
+.calendar-picker-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.calendar-picker-empty {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
