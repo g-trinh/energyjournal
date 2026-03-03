@@ -1,0 +1,109 @@
+.calendar-connect-shell {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: slideUp 0.8s var(--ease-out-expo) 0.1s both;
+}
+
+.calendar-connect-card {
+  width: 100%;
+  max-width: 640px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  backdrop-filter: blur(20px);
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.calendar-connect-icon {
+  width: 82px;
+  height: 82px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  background: rgba(245, 240, 232, 0.04);
+}
+
+.calendar-connect-title {
+  font-family: var(--font-display);
+  color: var(--color-text-primary);
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  line-height: 1.15;
+}
+
+.calendar-connect-subtitle {
+  color: var(--color-text-secondary);
+  max-width: 52ch;
+}
+
+.calendar-connect-cta {
+  margin-top: var(--space-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1.25rem;
+  background: linear-gradient(135deg, var(--color-accent-amber) 0%, #d4923d 100%);
+  color: var(--color-bg-deep);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform var(--duration-normal) var(--ease-out-expo), box-shadow var(--duration-normal) var(--ease-out-expo);
+  box-shadow: var(--shadow-sm), 0 0 20px rgba(232, 164, 69, 0.2);
+}
+
+.calendar-connect-cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), 0 0 30px rgba(232, 164, 69, 0.3);
+}
+
+.calendar-connect-cta:focus-visible {
+  outline: 3px solid rgba(232, 164, 69, 0.45);
+  outline-offset: 2px;
+}
+
+.calendar-connect-cta:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.calendar-connect-gmark {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.calendar-connect-note {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 768px) {
+  .calendar-connect-shell {
+    min-height: calc(100vh - 96px);
+    align-items: flex-start;
+  }
+
+  .calendar-connect-card {
+    margin-top: var(--space-md);
+  }
+
+  .calendar-connect-cta {
+    width: 100%;
+  }
+}
