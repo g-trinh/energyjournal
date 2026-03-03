@@ -24,12 +24,6 @@ func (e *GoogleAPIError) Error() string {
 	return fmt.Sprintf("google calendar api returned status %d", e.StatusCode)
 }
 
-type Event struct {
-	ColorID string
-	Start   time.Time
-	End     time.Time
-}
-
 type GoogleCalendarClient struct {
 	baseURL    string
 	transport  http.RoundTripper
@@ -82,7 +76,7 @@ func (c *GoogleCalendarClient) ListCalendars(ctx context.Context, token string) 
 	return items, nil
 }
 
-func (c *GoogleCalendarClient) ListEvents(ctx context.Context, token, calendarID string, start, end time.Time) ([]Event, error) {
+func (c *GoogleCalendarClient) ListEvents(ctx context.Context, token, calendarID string, start, end time.Time) ([]calendar.Event, error) {
 	path := fmt.Sprintf("%s/calendars/%s/events", c.baseURL, url.PathEscape(calendarID))
 	query := url.Values{}
 	query.Set("timeMin", start.Format(time.RFC3339))
@@ -119,7 +113,7 @@ func (c *GoogleCalendarClient) ListEvents(ctx context.Context, token, calendarID
 		return nil, err
 	}
 
-	events := make([]Event, 0, len(payload.Items))
+	events := make([]calendar.Event, 0, len(payload.Items))
 	for _, item := range payload.Items {
 		startAt, err := time.Parse(time.RFC3339, item.Start.DateTime)
 		if err != nil {
@@ -129,7 +123,7 @@ func (c *GoogleCalendarClient) ListEvents(ctx context.Context, token, calendarID
 		if err != nil {
 			continue
 		}
-		events = append(events, Event{
+		events = append(events, calendar.Event{
 			ColorID: item.ColorID,
 			Start:   startAt,
 			End:     endAt,

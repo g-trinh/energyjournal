@@ -9,7 +9,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"energyjournal/internal/domain/calendar"
-	integgoogle "energyjournal/internal/integration/google"
 	errpkg "energyjournal/internal/pkg/error"
 )
 
@@ -29,16 +28,16 @@ func (r *fakeRepo) Upsert(ctx context.Context, conn calendar.CalendarConnection)
 	return nil
 }
 
-type fakeGoogleClient struct {
+type fakeCalendarClient struct {
 	calendars []calendar.CalendarItem
-	events    []integgoogle.Event
+	events    []calendar.Event
 }
 
-func (c *fakeGoogleClient) ListCalendars(context.Context, string) ([]calendar.CalendarItem, error) {
+func (c *fakeCalendarClient) ListCalendars(context.Context, string) ([]calendar.CalendarItem, error) {
 	return c.calendars, nil
 }
 
-func (c *fakeGoogleClient) ListEvents(context.Context, string, string, time.Time, time.Time) ([]integgoogle.Event, error) {
+func (c *fakeCalendarClient) ListEvents(context.Context, string, string, time.Time, time.Time) ([]calendar.Event, error) {
 	return c.events, nil
 }
 
@@ -80,7 +79,7 @@ func TestGetStatus(t *testing.T) {
 		getFn: func(context.Context, string) (*calendar.CalendarConnection, error) {
 			return nil, nil
 		},
-	}, &fakeGoogleClient{}, &fakeOAuth{}, "secret")
+	}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 
 	status, err := svc.GetStatus(context.Background(), "uid")
 	if err != nil {
@@ -94,7 +93,7 @@ func TestGetStatus(t *testing.T) {
 func TestHandleCallbackInvalidState(t *testing.T) {
 	t.Parallel()
 
-	svc := NewCalendarService(&fakeRepo{}, &fakeGoogleClient{}, &fakeOAuth{}, "secret")
+	svc := NewCalendarService(&fakeRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 	err := svc.HandleCallback(context.Background(), "code", "invalid")
 	if err == nil {
 		t.Fatal("expected error")
@@ -122,7 +121,7 @@ func TestHandleCallbackUpsertsTokens(t *testing.T) {
 			saved = conn
 			return nil
 		},
-	}, &fakeGoogleClient{}, oauth, "secret")
+	}, &fakeCalendarClient{}, oauth, "secret")
 	svc.now = func() time.Time { return time.Date(2026, 3, 3, 11, 0, 0, 0, time.UTC) }
 
 	state := svc.signState("uid-1", svc.now())
@@ -142,7 +141,7 @@ func TestGetCalendarsRequiresOAuthConnection(t *testing.T) {
 		getFn: func(context.Context, string) (*calendar.CalendarConnection, error) {
 			return nil, nil
 		},
-	}, &fakeGoogleClient{}, &fakeOAuth{}, "secret")
+	}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 
 	_, err := svc.GetCalendars(context.Background(), "uid")
 	if err == nil {
@@ -170,7 +169,7 @@ func TestSetCalendarPersistsSelection(t *testing.T) {
 			saved = conn
 			return nil
 		},
-	}, &fakeGoogleClient{}, &fakeOAuth{}, "secret")
+	}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 
 	if err := svc.SetCalendar(context.Background(), "uid", "primary"); err != nil {
 		t.Fatalf("unexpected err: %v", err)
@@ -202,8 +201,8 @@ func TestGetSpendingAggregatesByColorAndRefreshesToken(t *testing.T) {
 			}
 			return nil
 		},
-	}, &fakeGoogleClient{
-		events: []integgoogle.Event{
+	}, &fakeCalendarClient{
+		events: []calendar.Event{
 			{ColorID: "5", Start: now.Add(-4 * time.Hour), End: now.Add(-3 * time.Hour)},
 			{ColorID: "5", Start: now.Add(-3 * time.Hour), End: now.Add(-90 * time.Minute)},
 			{ColorID: "1", Start: now.Add(-90 * time.Minute), End: now},
@@ -238,7 +237,7 @@ func TestGetSpendingAggregatesByColorAndRefreshesToken(t *testing.T) {
 func TestVerifyStateExpired(t *testing.T) {
 	t.Parallel()
 
-	svc := NewCalendarService(&fakeRepo{}, &fakeGoogleClient{}, &fakeOAuth{}, "secret")
+	svc := NewCalendarService(&fakeRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 	svc.now = func() time.Time { return time.Date(2026, 3, 3, 12, 0, 0, 0, time.UTC) }
 	expired := svc.signState("uid", svc.now().Add(-20*time.Minute))
 

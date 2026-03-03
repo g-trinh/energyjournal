@@ -15,7 +15,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"energyjournal/internal/domain/calendar"
-	integgoogle "energyjournal/internal/integration/google"
 	errpkg "energyjournal/internal/pkg/error"
 )
 
@@ -40,24 +39,24 @@ type oauthProvider interface {
 	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
 }
 
-type googleCalendarClient interface {
+type calendarClient interface {
 	ListCalendars(ctx context.Context, token string) ([]calendar.CalendarItem, error)
-	ListEvents(ctx context.Context, token, calendarID string, start, end time.Time) ([]integgoogle.Event, error)
+	ListEvents(ctx context.Context, token, calendarID string, start, end time.Time) ([]calendar.Event, error)
 }
 
 type CalendarService struct {
-	repo         calendar.CalendarConnectionRepository
-	googleClient googleCalendarClient
-	oauth        oauthProvider
-	stateSecret  string
-	stateTTL     time.Duration
-	now          func() time.Time
+	repo           calendar.CalendarConnectionRepository
+	calendarClient calendarClient
+	oauth          oauthProvider
+	stateSecret    string
+	stateTTL       time.Duration
+	now            func() time.Time
 }
 
-func NewCalendarService(repo calendar.CalendarConnectionRepository, googleClient googleCalendarClient, oauth oauthProvider, stateSecret string) *CalendarService {
+func NewCalendarService(repo calendar.CalendarConnectionRepository, client calendarClient, oauth oauthProvider, stateSecret string) *CalendarService {
 	return &CalendarService{
-		repo:         repo,
-		googleClient: googleClient,
+		repo:           repo,
+		calendarClient: client,
 		oauth:        oauth,
 		stateSecret:  stateSecret,
 		stateTTL:     15 * time.Minute,
@@ -114,9 +113,9 @@ func (s *CalendarService) GetCalendars(ctx context.Context, uid string) ([]calen
 		return nil, err
 	}
 	if conn.AccessToken == "" {
-		return nil, errpkg.NewCalendarNotConnectedError("google calendar not connected")
+		return nil, errpkg.NewCalendarNotConnectedError("calendar not connected")
 	}
-	return s.googleClient.ListCalendars(ctx, conn.AccessToken)
+	return s.calendarClient.ListCalendars(ctx, conn.AccessToken)
 }
 
 func (s *CalendarService) SetCalendar(ctx context.Context, uid, calendarID string) error {
@@ -125,7 +124,7 @@ func (s *CalendarService) SetCalendar(ctx context.Context, uid, calendarID strin
 		return err
 	}
 	if conn.AccessToken == "" {
-		return errpkg.NewCalendarNotConnectedError("google calendar not connected")
+		return errpkg.NewCalendarNotConnectedError("calendar not connected")
 	}
 
 	conn.CalendarID = calendarID
@@ -138,7 +137,7 @@ func (s *CalendarService) GetSpending(ctx context.Context, uid string, start, en
 		return nil, err
 	}
 	if conn.AccessToken == "" || conn.CalendarID == "" {
-		return nil, errpkg.NewCalendarNotConnectedError("google calendar not connected")
+		return nil, errpkg.NewCalendarNotConnectedError("calendar not connected")
 	}
 
 	token := &oauth2.Token{
@@ -163,7 +162,7 @@ func (s *CalendarService) GetSpending(ctx context.Context, uid string, start, en
 		token = refreshed
 	}
 
-	events, err := s.googleClient.ListEvents(ctx, token.AccessToken, conn.CalendarID, start, end)
+	events, err := s.calendarClient.ListEvents(ctx, token.AccessToken, conn.CalendarID, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +188,7 @@ func (s *CalendarService) requireConnection(ctx context.Context, uid string) (*c
 		return nil, err
 	}
 	if conn == nil {
-		return nil, errpkg.NewCalendarNotConnectedError("google calendar not connected")
+		return nil, errpkg.NewCalendarNotConnectedError("calendar not connected")
 	}
 	return conn, nil
 }

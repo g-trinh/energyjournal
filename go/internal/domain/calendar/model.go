@@ -30,6 +30,12 @@ type CalendarItem struct {
 	Color string `json:"color"`
 }
 
+type Event struct {
+	ColorID string
+	Start   time.Time
+	End     time.Time
+}
+
 type CalendarConnectionRepository interface {
 	Get(ctx context.Context, uid string) (*CalendarConnection, error)
 	Upsert(ctx context.Context, conn CalendarConnection) error
