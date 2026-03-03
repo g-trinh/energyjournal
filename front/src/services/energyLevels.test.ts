@@ -27,6 +27,13 @@ describe('energyLevels service', () => {
       physical: 7,
       mental: 5,
       emotional: 8,
+      sleepQuality: 4,
+      stressLevel: 2,
+      physicalActivity: 'light',
+      nutrition: 'good',
+      socialInteractions: 'positive',
+      timeOutdoors: '30min_1hr',
+      notes: 'Felt productive.',
     }
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       jsonResponse(200, payload),
@@ -117,11 +124,68 @@ describe('energyLevels service', () => {
       physical: 6,
       mental: 5,
       emotional: 4,
+      sleepQuality: 3,
+      stressLevel: 2,
+      physicalActivity: 'moderate',
+      nutrition: 'good',
+      socialInteractions: 'positive',
+      timeOutdoors: '30min_1hr',
+      notes: 'Great day.',
     }
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse(200, payload))
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse(200, payload))
 
     const result = await saveEnergyLevels(payload, 'token')
     expect(result).toEqual(payload)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/energy/levels',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      }),
+    )
+  })
+
+  it('omits empty optional context fields on PUT payload', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      jsonResponse(200, {
+        date: '2026-02-21',
+        physical: 6,
+        mental: 5,
+        emotional: 4,
+      }),
+    )
+
+    await saveEnergyLevels(
+      {
+        date: '2026-02-21',
+        physical: 6,
+        mental: 5,
+        emotional: 4,
+        sleepQuality: undefined,
+        stressLevel: undefined,
+        physicalActivity: '',
+        nutrition: '',
+        socialInteractions: '',
+        timeOutdoors: '',
+        notes: '',
+      },
+      'token',
+    )
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/energy/levels',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({
+          date: '2026-02-21',
+          physical: 6,
+          mental: 5,
+          emotional: 4,
+        }),
+      }),
+    )
   })
 
   it('throws for non-200 PUT failures', async () => {

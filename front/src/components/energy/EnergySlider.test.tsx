@@ -37,4 +37,23 @@ describe('EnergySlider', () => {
 
     expect(onChange).toHaveBeenCalledWith(9)
   })
+
+  it('supports custom min and max values', () => {
+    render(
+      <EnergySlider
+        value={3}
+        color="#7eb8b3"
+        ariaLabel="Sleep quality"
+        onChange={vi.fn()}
+        min={1}
+        max={5}
+      />,
+    )
+
+    const slider = screen.getByRole('slider', { name: 'Sleep quality' })
+    expect(slider).toHaveAttribute('min', '1')
+    expect(slider).toHaveAttribute('max', '5')
+    expect(slider).toHaveAttribute('aria-valuemin', '1')
+    expect(slider).toHaveAttribute('aria-valuemax', '5')
+  })
 })

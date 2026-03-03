@@ -39,4 +39,22 @@ describe('EnergySection', () => {
 
     expect(onChange).toHaveBeenCalledWith(8)
   })
+
+  it('passes custom range values to the slider', () => {
+    render(
+      <EnergySection
+        label="Sleep"
+        color="#7eb8b3"
+        value={3}
+        onChange={vi.fn()}
+        min={1}
+        max={5}
+      />,
+    )
+
+    const slider = screen.getByRole('slider', { name: 'Sleep energy level' })
+    expect(slider).toHaveAttribute('min', '1')
+    expect(slider).toHaveAttribute('max', '5')
+    expect(screen.getByText('/ 5')).toBeInTheDocument()
+  })
 })

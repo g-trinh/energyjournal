@@ -8,8 +8,41 @@ definitions:
         type: integer
       mental:
         type: integer
+      notes:
+        type: string
+      nutrition:
+        enum:
+        - poor
+        - average
+        - good
+        - excellent
+        type: string
       physical:
         type: integer
+      physicalActivity:
+        enum:
+        - none
+        - light
+        - moderate
+        - intense
+        type: string
+      sleepQuality:
+        type: integer
+      socialInteractions:
+        enum:
+        - negative
+        - neutral
+        - positive
+        type: string
+      stressLevel:
+        type: integer
+      timeOutdoors:
+        enum:
+        - none
+        - under_30min
+        - 30min_1hr
+        - over_1hr
+        type: string
     type: object
   energy.ErrorResponse:
     properties:
@@ -24,8 +57,41 @@ definitions:
         type: integer
       mental:
         type: integer
+      notes:
+        type: string
+      nutrition:
+        enum:
+        - poor
+        - average
+        - good
+        - excellent
+        type: string
       physical:
         type: integer
+      physicalActivity:
+        enum:
+        - none
+        - light
+        - moderate
+        - intense
+        type: string
+      sleepQuality:
+        type: integer
+      socialInteractions:
+        enum:
+        - negative
+        - neutral
+        - positive
+        type: string
+      stressLevel:
+        type: integer
+      timeOutdoors:
+        enum:
+        - none
+        - under_30min
+        - 30min_1hr
+        - over_1hr
+        type: string
     type: object
 info:
   contact: {}
