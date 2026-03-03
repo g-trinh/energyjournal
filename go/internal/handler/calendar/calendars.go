@@ -17,6 +17,15 @@ func NewCalendarsHandler(service calendar.CalendarService) *CalendarsHandler {
 	return &CalendarsHandler{service: service}
 }
 
+// GetCalendars godoc
+// @Summary List user's Google Calendars
+// @Tags calendar
+// @Security BearerAuth
+// @Success 200 {array} calendar.CalendarItem
+// @Failure 401 {object} calendar.ErrorResponse
+// @Failure 424 {object} calendar.ErrorResponse
+// @Failure 500 {object} calendar.ErrorResponse
+// @Router /calendar/calendars [get]
 func (h *CalendarsHandler) GetCalendars(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.UIDFromContext(r.Context())
 	if !ok || uid == "" {
@@ -33,6 +42,20 @@ func (h *CalendarsHandler) GetCalendars(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, calendars)
 }
 
+// SetConnection godoc
+// @Summary Save selected calendar
+// @Description Persists the user's chosen Google Calendar ID.
+// @Tags calendar
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body calendar.SetConnectionRequest true "Selected calendar ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} calendar.ErrorResponse
+// @Failure 401 {object} calendar.ErrorResponse
+// @Failure 424 {object} calendar.ErrorResponse
+// @Failure 500 {object} calendar.ErrorResponse
+// @Router /calendar/connection [put]
 func (h *CalendarsHandler) SetConnection(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.UIDFromContext(r.Context())
 	if !ok || uid == "" {

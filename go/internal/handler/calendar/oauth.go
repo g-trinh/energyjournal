@@ -20,6 +20,14 @@ func NewOAuthHandler(service calendar.CalendarService, frontendBaseURL string) *
 	}
 }
 
+// GetAuthURL godoc
+// @Summary Build Google OAuth authorization URL
+// @Tags calendar
+// @Security BearerAuth
+// @Success 200 {object} calendar.AuthURLResponse
+// @Failure 401 {object} calendar.ErrorResponse
+// @Failure 500 {object} calendar.ErrorResponse
+// @Router /calendar/auth [get]
 func (h *OAuthHandler) GetAuthURL(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.UIDFromContext(r.Context())
 	if !ok || uid == "" {
@@ -30,6 +38,16 @@ func (h *OAuthHandler) GetAuthURL(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, AuthURLResponse{AuthURL: h.service.BuildAuthURL(uid)})
 }
 
+// Callback godoc
+// @Summary Google OAuth callback
+// @Description Receives the authorization code from Google, validates state and stores tokens.
+// @Tags calendar
+// @Param code query string true "Authorization code"
+// @Param state query string true "Signed state"
+// @Success 302 {string} string "Redirect to frontend /timespending?calendar=select"
+// @Failure 400 {object} calendar.ErrorResponse
+// @Failure 500 {object} calendar.ErrorResponse
+// @Router /calendar/auth/callback [get]
 func (h *OAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")

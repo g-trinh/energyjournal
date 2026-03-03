@@ -15,6 +15,15 @@ func NewStatusHandler(service calendar.CalendarService) *StatusHandler {
 	return &StatusHandler{service: service}
 }
 
+// GetStatus godoc
+// @Summary Get Google Calendar connection status
+// @Description Returns a tri-state status: disconnected (no OAuth), pending_selection (OAuth done, no calendar chosen), connected (ready).
+// @Tags calendar
+// @Security BearerAuth
+// @Success 200 {object} calendar.StatusResponse
+// @Failure 401 {object} calendar.ErrorResponse
+// @Failure 500 {object} calendar.ErrorResponse
+// @Router /calendar/status [get]
 func (h *StatusHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.UIDFromContext(r.Context())
 	if !ok || uid == "" {

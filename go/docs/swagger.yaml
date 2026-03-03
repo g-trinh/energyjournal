@@ -1,5 +1,49 @@
 basePath: /
 definitions:
+  calendar.AuthURLResponse:
+    properties:
+      auth_url:
+        type: string
+    type: object
+  calendar.CalendarItem:
+    properties:
+      color:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  calendar.ConnectionStatus:
+    enum:
+    - disconnected
+    - pending_selection
+    - connected
+    type: string
+    x-enum-varnames:
+    - StatusDisconnected
+    - StatusPendingSelection
+    - StatusConnected
+  calendar.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  calendar.SetConnectionRequest:
+    properties:
+      calendar_id:
+        type: string
+    type: object
+  calendar.Spendings:
+    additionalProperties:
+      format: float64
+      type: number
+    type: object
+  calendar.StatusResponse:
+    properties:
+      status:
+        $ref: '#/definitions/calendar.ConnectionStatus'
+    type: object
   energy.EnergyLevelsResponse:
     properties:
       date:
@@ -34,6 +78,188 @@ info:
   title: Energy Journal API
   version: "1.0"
 paths:
+  /calendar/auth:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/calendar.AuthURLResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Build Google OAuth authorization URL
+      tags:
+      - calendar
+  /calendar/auth/callback:
+    get:
+      description: Receives the authorization code from Google, validates state and
+        stores tokens.
+      parameters:
+      - description: Authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: Signed state
+        in: query
+        name: state
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Redirect to frontend /timespending?calendar=select
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+      summary: Google OAuth callback
+      tags:
+      - calendar
+  /calendar/calendars:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/calendar.CalendarItem'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "424":
+          description: Failed Dependency
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List user's Google Calendars
+      tags:
+      - calendar
+  /calendar/connection:
+    put:
+      consumes:
+      - application/json
+      description: Persists the user's chosen Google Calendar ID.
+      parameters:
+      - description: Selected calendar ID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/calendar.SetConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "424":
+          description: Failed Dependency
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Save selected calendar
+      tags:
+      - calendar
+  /calendar/spending:
+    get:
+      description: Aggregates event durations from the user's selected Google Calendar
+        grouped by event color label.
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: end
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/calendar.Spendings'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "424":
+          description: Failed Dependency
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get time spendings from the selected Google Calendar
+      tags:
+      - calendar
+  /calendar/status:
+    get:
+      description: 'Returns a tri-state status: disconnected (no OAuth), pending_selection
+        (OAuth done, no calendar chosen), connected (ready).'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/calendar.StatusResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/calendar.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Google Calendar connection status
+      tags:
+      - calendar
   /energy/levels:
     get:
       parameters:

@@ -14,6 +14,7 @@ import (
 	calendarhandler "energyjournal/internal/handler/calendar"
 	energyhandler "energyjournal/internal/handler/energy"
 	userhandler "energyjournal/internal/handler/user"
+	integgoogle "energyjournal/internal/integration/google"
 	"energyjournal/internal/pkg/firebase"
 	"energyjournal/internal/pkg/firestore"
 	"energyjournal/internal/server/middleware"
@@ -23,7 +24,6 @@ import (
 	energystorage "energyjournal/internal/service/energy/storage"
 	userservice "energyjournal/internal/service/user"
 	userstorage "energyjournal/internal/service/user/storage"
-	integgoogle "energyjournal/internal/integration/google"
 	"golang.org/x/oauth2"
 	oauth2google "golang.org/x/oauth2/google"
 )
@@ -63,6 +63,11 @@ func New(addr string) *http.Server {
 	emailSender := &noopEmailSender{} // TODO: implement real email sender
 
 	activationBaseURL := lookupEnvOrDefault("FRONTEND_ACTIVATION_BASE_URL", "http://localhost:8080")
+	frontendBaseURL := requiredEnv("FRONTEND_BASE_URL")
+	googleClientID := requiredEnv("GOOGLE_CLIENT_ID")
+	googleClientSecret := requiredEnv("GOOGLE_CLIENT_SECRET")
+	googleRedirectURI := requiredEnv("GOOGLE_OAUTH_REDIRECT_URI")
+	googleStateSecret := requiredEnv("GOOGLE_OAUTH_STATE_SECRET")
 
 	userService := userservice.NewUserService(userRepo, tokenRepo, authProvider, emailSender, activationBaseURL)
 	energyRepo := energystorage.NewEnergyRepository(firestoreClient.Client)
@@ -71,17 +76,13 @@ func New(addr string) *http.Server {
 	connectionRepo := calendarstorage.NewConnectionRepository(firestoreClient.Client)
 	googleClient := integgoogle.NewGoogleCalendarClient()
 	calendarOAuthConfig := &oauth2.Config{
-		ClientID:     strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
-		ClientSecret: strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_SECRET")),
+		ClientID:     googleClientID,
+		ClientSecret: googleClientSecret,
 		Endpoint:     oauth2google.Endpoint,
-		RedirectURL:  strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_REDIRECT_URI")),
+		RedirectURL:  googleRedirectURI,
 		Scopes:       []string{"https://www.googleapis.com/auth/calendar.readonly"},
 	}
-	stateSecret := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_STATE_SECRET"))
-	frontendBaseURL := strings.TrimSpace(os.Getenv("FRONTEND_BASE_URL"))
-	if frontendBaseURL == "" {
-		frontendBaseURL = activationBaseURL
-	}
+	stateSecret := googleStateSecret
 
 	deps := Dependencies{
 		CalendarService: calendarservice.NewCalendarService(connectionRepo, googleClient, calendarOAuthConfig, stateSecret),
@@ -223,4 +224,12 @@ func lookupEnvOrDefault(key, def string) string {
 		return v
 	}
 	return def
+}
+
+func requiredEnv(key string) string {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		log.Fatalf("%s environment variable is required", key)
+	}
+	return value
 }
