@@ -6,6 +6,7 @@ import CalendarPicker from '@/components/calendar/CalendarPicker'
 import Toast from '@/components/calendar/Toast'
 import type { CalendarItem } from '@/components/calendar/types'
 import { trackEvent } from '@/lib/analytics'
+import { CALENDAR_COLOR_MAP, CALENDAR_FALLBACK_COLORS } from '@/lib/calendarColors'
 import { clearSession, getIdToken } from '@/lib/session'
 import {
   getCalendarAuthURL,
@@ -27,20 +28,8 @@ interface ChartData {
 type FetchErrorKind = 'offline' | 'generic'
 type ViewStatus = 'loading' | CalendarStatus
 
-// Warm, organic color palette
-const CATEGORY_COLORS: Record<string, string> = {
-  Travail: '#e8a445',
-  Perso: '#8fa58b',
-  Routine: '#c4826d',
-  Repas: '#7eb8b3',
-  Sport: '#d4a574',
-  Sommeil: '#9b8aa6',
-}
-
-const DEFAULT_COLORS = ['#e8a445', '#8fa58b', '#c4826d', '#7eb8b3', '#d4a574', '#9b8aa6', '#c9a87c', '#a8b5a0']
-
 function getColorForCategory(name: string, index: number): string {
-  return CATEGORY_COLORS[name] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]
+  return CALENDAR_COLOR_MAP[name] || CALENDAR_FALLBACK_COLORS[index % CALENDAR_FALLBACK_COLORS.length]
 }
 
 function formatDateForDisplay(dateStr: string): string {
