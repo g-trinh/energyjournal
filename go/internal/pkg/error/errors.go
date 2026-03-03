@@ -72,6 +72,23 @@ func NewAuthenticationError(message string) *AuthenticationError {
 	return &AuthenticationError{Message: message}
 }
 
+// CalendarNotConnectedError indicates that a calendar operation requires OAuth setup first.
+type CalendarNotConnectedError struct {
+	Message string
+}
+
+func (e *CalendarNotConnectedError) Error() string {
+	if e.Message != "" {
+		return e.Message
+	}
+	return "calendar not connected"
+}
+
+// NewCalendarNotConnectedError creates a CalendarNotConnectedError.
+func NewCalendarNotConnectedError(message string) *CalendarNotConnectedError {
+	return &CalendarNotConnectedError{Message: message}
+}
+
 // UnknownError represents an unexpected internal error.
 type UnknownError struct {
 	Err error
