@@ -17,11 +17,51 @@ import (
 )
 
 type stubSpendingService struct {
-	getSpending func(start, end time.Time) (calendar.Spendings, error)
+	getStatus    func(ctx context.Context, uid string) (calendar.ConnectionStatus, error)
+	buildAuthURL func(uid string) string
+	callback     func(ctx context.Context, code, state string) error
+	getCalendars func(ctx context.Context, uid string) ([]calendar.CalendarItem, error)
+	setCalendar  func(ctx context.Context, uid, calendarID string) error
+	getSpending  func(ctx context.Context, uid string, start, end time.Time) (calendar.Spendings, error)
 }
 
-func (s *stubSpendingService) GetSpending(start, end time.Time) (calendar.Spendings, error) {
-	return s.getSpending(start, end)
+func (s *stubSpendingService) GetStatus(ctx context.Context, uid string) (calendar.ConnectionStatus, error) {
+	if s.getStatus != nil {
+		return s.getStatus(ctx, uid)
+	}
+	return calendar.StatusDisconnected, nil
+}
+
+func (s *stubSpendingService) BuildAuthURL(uid string) string {
+	if s.buildAuthURL != nil {
+		return s.buildAuthURL(uid)
+	}
+	return "https://accounts.example/auth"
+}
+
+func (s *stubSpendingService) HandleCallback(ctx context.Context, code, state string) error {
+	if s.callback != nil {
+		return s.callback(ctx, code, state)
+	}
+	return nil
+}
+
+func (s *stubSpendingService) GetCalendars(ctx context.Context, uid string) ([]calendar.CalendarItem, error) {
+	if s.getCalendars != nil {
+		return s.getCalendars(ctx, uid)
+	}
+	return nil, nil
+}
+
+func (s *stubSpendingService) SetCalendar(ctx context.Context, uid, calendarID string) error {
+	if s.setCalendar != nil {
+		return s.setCalendar(ctx, uid, calendarID)
+	}
+	return nil
+}
+
+func (s *stubSpendingService) GetSpending(ctx context.Context, uid string, start, end time.Time) (calendar.Spendings, error) {
+	return s.getSpending(ctx, uid, start, end)
 }
 
 type stubVerifier struct {
@@ -83,8 +123,8 @@ func TestRegister_CalendarSpending_UnauthorizedWithoutToken(t *testing.T) {
 
 	mux := http.NewServeMux()
 	register(mux, Dependencies{
-		SpendingService: &stubSpendingService{
-			getSpending: func(start, end time.Time) (calendar.Spendings, error) {
+		CalendarService: &stubSpendingService{
+			getSpending: func(ctx context.Context, uid string, start, end time.Time) (calendar.Spendings, error) {
 				t.Fatal("spending service should not be called")
 				return nil, nil
 			},
@@ -111,8 +151,8 @@ func TestRegister_CalendarSpending_AuthorizedWithToken(t *testing.T) {
 
 	mux := http.NewServeMux()
 	register(mux, Dependencies{
-		SpendingService: &stubSpendingService{
-			getSpending: func(start, end time.Time) (calendar.Spendings, error) {
+		CalendarService: &stubSpendingService{
+			getSpending: func(ctx context.Context, uid string, start, end time.Time) (calendar.Spendings, error) {
 				return calendar.Spendings{"Work": 12.5}, nil
 			},
 		},
@@ -149,8 +189,8 @@ func TestRegister_CalendarSpending_WithoutAuthMiddlewareFailsClosed(t *testing.T
 
 	mux := http.NewServeMux()
 	register(mux, Dependencies{
-		SpendingService: &stubSpendingService{
-			getSpending: func(start, end time.Time) (calendar.Spendings, error) {
+		CalendarService: &stubSpendingService{
+			getSpending: func(ctx context.Context, uid string, start, end time.Time) (calendar.Spendings, error) {
 				t.Fatal("spending service should not be called")
 				return nil, nil
 			},

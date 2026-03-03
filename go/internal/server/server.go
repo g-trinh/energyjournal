@@ -18,18 +18,23 @@ import (
 	"energyjournal/internal/pkg/firestore"
 	"energyjournal/internal/server/middleware"
 	calendarservice "energyjournal/internal/service/calendar"
+	calendarstorage "energyjournal/internal/service/calendar/storage"
 	energyservice "energyjournal/internal/service/energy"
 	energystorage "energyjournal/internal/service/energy/storage"
 	userservice "energyjournal/internal/service/user"
 	userstorage "energyjournal/internal/service/user/storage"
+	integgoogle "energyjournal/internal/integration/google"
+	"golang.org/x/oauth2"
+	oauth2google "golang.org/x/oauth2/google"
 )
 
 // Dependencies groups external services that the HTTP server needs.
 type Dependencies struct {
-	SpendingService calendar.SpendingService
+	CalendarService calendar.CalendarService
 	UserService     user.UserService
 	EnergyService   energy.EnergyService
 	AuthMiddleware  *middleware.AuthMiddleware
+	FrontendBaseURL string
 }
 
 // New creates the HTTP server with the default routes.
@@ -63,12 +68,27 @@ func New(addr string) *http.Server {
 	energyRepo := energystorage.NewEnergyRepository(firestoreClient.Client)
 	energyLevelsService := energyservice.NewEnergyService(energyRepo)
 	authMiddleware := middleware.NewAuthMiddleware(firebaseClient, userRepo)
+	connectionRepo := calendarstorage.NewConnectionRepository(firestoreClient.Client)
+	googleClient := integgoogle.NewGoogleCalendarClient()
+	calendarOAuthConfig := &oauth2.Config{
+		ClientID:     strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
+		ClientSecret: strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_SECRET")),
+		Endpoint:     oauth2google.Endpoint,
+		RedirectURL:  strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_REDIRECT_URI")),
+		Scopes:       []string{"https://www.googleapis.com/auth/calendar.readonly"},
+	}
+	stateSecret := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_STATE_SECRET"))
+	frontendBaseURL := strings.TrimSpace(os.Getenv("FRONTEND_BASE_URL"))
+	if frontendBaseURL == "" {
+		frontendBaseURL = activationBaseURL
+	}
 
 	deps := Dependencies{
-		SpendingService: calendarservice.NewSpendingService(),
+		CalendarService: calendarservice.NewCalendarService(connectionRepo, googleClient, calendarOAuthConfig, stateSecret),
 		UserService:     userService,
 		EnergyService:   energyLevelsService,
 		AuthMiddleware:  authMiddleware,
+		FrontendBaseURL: frontendBaseURL,
 	}
 	register(mux, deps)
 
@@ -91,14 +111,31 @@ func (s *noopEmailSender) SendActivationEmail(ctx context.Context, email, activa
 func register(mux *http.ServeMux, deps Dependencies) {
 	mux.HandleFunc("/healthz", health)
 
-	spendingHandler := calendarhandler.NewSpendingHandler(deps.SpendingService)
-	if deps.AuthMiddleware != nil {
+	if deps.CalendarService != nil && deps.AuthMiddleware != nil {
+		statusHandler := calendarhandler.NewStatusHandler(deps.CalendarService)
+		oauthHandler := calendarhandler.NewOAuthHandler(deps.CalendarService, deps.FrontendBaseURL)
+		calendarsHandler := calendarhandler.NewCalendarsHandler(deps.CalendarService)
+		spendingHandler := calendarhandler.NewSpendingHandler(deps.CalendarService)
+
+		mux.Handle("GET /calendar/status", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(statusHandler.GetStatus)))
+		mux.Handle("GET /calendar/auth", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(oauthHandler.GetAuthURL)))
+		mux.HandleFunc("GET /calendar/auth/callback", oauthHandler.Callback)
+		mux.Handle("GET /calendar/calendars", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(calendarsHandler.GetCalendars)))
+		mux.Handle("PUT /calendar/connection", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(calendarsHandler.SetConnection)))
 		mux.Handle("GET /calendar/spending", deps.AuthMiddleware.RequireAuth(http.HandlerFunc(spendingHandler.GetSpending)))
 	} else {
 		// Fail closed when auth middleware is unavailable.
-		mux.HandleFunc("GET /calendar/spending", func(w http.ResponseWriter, _ *http.Request) {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		})
+		for _, route := range []string{
+			"GET /calendar/status",
+			"GET /calendar/auth",
+			"GET /calendar/calendars",
+			"PUT /calendar/connection",
+			"GET /calendar/spending",
+		} {
+			mux.HandleFunc(route, func(w http.ResponseWriter, _ *http.Request) {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			})
+		}
 	}
 
 	// User routes
