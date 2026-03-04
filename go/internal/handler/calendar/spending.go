@@ -7,21 +7,34 @@ import (
 
 	"energyjournal/internal/domain/calendar"
 	errpkg "energyjournal/internal/pkg/error"
+	"energyjournal/internal/server/middleware"
 )
 
 const dateFormat = "2006-01-02"
 
 // SpendingHandler handles HTTP requests for calendar spending.
 type SpendingHandler struct {
-	service calendar.SpendingService
+	service calendar.CalendarService
 }
 
 // NewSpendingHandler creates a new SpendingHandler.
-func NewSpendingHandler(service calendar.SpendingService) *SpendingHandler {
+func NewSpendingHandler(service calendar.CalendarService) *SpendingHandler {
 	return &SpendingHandler{service: service}
 }
 
 // GetSpending handles GET /calendar/spending requests.
+// @Summary Get time spendings from the selected Google Calendar
+// @Description Aggregates event durations from the user's selected Google Calendar grouped by event color label.
+// @Tags calendar
+// @Security BearerAuth
+// @Param start query string true "Start date (YYYY-MM-DD)"
+// @Param end query string true "End date (YYYY-MM-DD)"
+// @Success 200 {object} calendar.Spendings
+// @Failure 400 {object} calendar.ErrorResponse
+// @Failure 401 {object} calendar.ErrorResponse
+// @Failure 424 {object} calendar.ErrorResponse
+// @Failure 500 {object} calendar.ErrorResponse
+// @Router /calendar/spending [get]
 func (h *SpendingHandler) GetSpending(w http.ResponseWriter, r *http.Request) {
 	startStr := r.URL.Query().Get("start")
 	if startStr == "" {
@@ -47,33 +60,18 @@ func (h *SpendingHandler) GetSpending(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spendings, err := h.service.GetSpending(start, end)
+	uid, ok := middleware.UIDFromContext(r.Context())
+	if !ok || uid == "" {
+		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	spendings, err := h.service.GetSpending(r.Context(), uid, start, end)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(spendings)
-}
-
-func writeError(w http.ResponseWriter, err error) {
-	var statusCode int
-	var message string
-
-	switch e := err.(type) {
-	case *errpkg.InputValidationError:
-		statusCode = http.StatusBadRequest
-		message = e.Error()
-	case *errpkg.NotFoundError:
-		statusCode = http.StatusNotFound
-		message = e.Error()
-	default:
-		statusCode = http.StatusInternalServerError
-		message = err.Error()
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+	_ = json.NewEncoder(w).Encode(spendings)
 }
