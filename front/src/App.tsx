@@ -6,8 +6,8 @@ import CalendarPicker from '@/components/calendar/CalendarPicker'
 import Toast from '@/components/calendar/Toast'
 import type { CalendarItem } from '@/components/calendar/types'
 import { trackEvent } from '@/lib/analytics'
-import { CALENDAR_COLOR_MAP, CALENDAR_FALLBACK_COLORS } from '@/lib/calendarColors'
 import { clearSession, getIdToken } from '@/lib/session'
+import { getSpendingColor, toChartData, truncateAxisLabel, type ChartData, type Spendings } from '@/lib/timeSpending'
 import {
   getCalendarAuthURL,
   getCalendars,
@@ -18,19 +18,8 @@ import {
 import './App.css'
 import './styles/calendar.css'
 
-type Spendings = Record<string, number>
-
-interface ChartData {
-  name: string
-  hours: number
-}
-
 type FetchErrorKind = 'offline' | 'generic'
 type ViewStatus = 'loading' | CalendarStatus
-
-function getColorForCategory(name: string, index: number): string {
-  return CALENDAR_COLOR_MAP[name] || CALENDAR_FALLBACK_COLORS[index % CALENDAR_FALLBACK_COLORS.length]
-}
 
 function startOfISOMonday(date: Date): Date {
   const normalized = new Date(date)
@@ -131,10 +120,7 @@ function App() {
         throw new Error(`HTTP ${response.status}`)
       }
       const spendings: Spendings = await response.json()
-      const chartData = Object.entries(spendings)
-        .filter(([name, hours]) => typeof name === 'string' && typeof hours === 'number' && Number.isFinite(hours))
-        .map(([name, hours]) => ({ name, hours }))
-        .sort((a, b) => b.hours - a.hours)
+      const chartData = toChartData(spendings)
       setData(chartData)
       setTotalHours(chartData.reduce((acc, item) => acc + item.hours, 0))
     } catch (err) {
@@ -351,8 +337,8 @@ function App() {
                         <defs>
                           {data.map((entry, index) => (
                             <linearGradient key={`gradient-${index}`} id={`barGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={getColorForCategory(entry.name, index)} stopOpacity={1} />
-                              <stop offset="100%" stopColor={getColorForCategory(entry.name, index)} stopOpacity={0.6} />
+                              <stop offset="0%" stopColor={getSpendingColor(entry.name, index)} stopOpacity={1} />
+                              <stop offset="100%" stopColor={getSpendingColor(entry.name, index)} stopOpacity={0.6} />
                             </linearGradient>
                           ))}
                           <filter id="glow">
@@ -368,10 +354,7 @@ function App() {
                           axisLine={false}
                           tickLine={false}
                           tick={{ fill: '#a09a90', fontSize: 13, fontWeight: 500 }}
-                          tickFormatter={(value) => {
-                            const raw = String(value)
-                            return raw.length > 10 ? `${raw.slice(0, 10)}…` : raw
-                          }}
+                          tickFormatter={(value) => truncateAxisLabel(String(value))}
                           dy={10}
                           angle={-35}
                           textAnchor="end"
@@ -409,7 +392,7 @@ function App() {
                       <div key={entry.name} className="legend-item">
                         <span
                           className="legend-dot"
-                          style={{ backgroundColor: getColorForCategory(entry.name, index) }}
+                          style={{ backgroundColor: getSpendingColor(entry.name, index) }}
                         />
                         <span className="legend-name">{entry.name}</span>
                         <span className="legend-hours">{entry.hours.toFixed(1)}h</span>
