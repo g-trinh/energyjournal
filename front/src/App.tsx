@@ -87,6 +87,7 @@ function App() {
   const [calendarsLoading, setCalendarsLoading] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [weekStart, setWeekStart] = useState(() => startOfISOMonday(new Date()))
+  const [showSpinner, setShowSpinner] = useState(false)
   const [totalHours, setTotalHours] = useState(0)
   const chartRef = useRef<HTMLDivElement>(null)
   const mainContentRef = useRef<HTMLDivElement>(null)
@@ -200,6 +201,21 @@ function App() {
     }
   }, [calendarStatus, fetchSpendings])
 
+  useEffect(() => {
+    if (!loading) {
+      setShowSpinner(false)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowSpinner(true)
+    }, 200)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [loading])
+
   async function handleConnectCalendar() {
     try {
       const authURL = await getCalendarAuthURL()
@@ -291,8 +307,8 @@ function App() {
             </section>
 
             <section className="chart-section" ref={chartRef}>
-              {loading && (
-                <div className="loading-state">
+              {showSpinner && (
+                <div className="loading-state" aria-hidden="true">
                   <div className="loading-spinner">
                     <div className="spinner-ring" />
                     <div className="spinner-ring" />
