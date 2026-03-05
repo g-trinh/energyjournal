@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +46,6 @@ type calendarClient interface {
 
 type CalendarService struct {
 	repo           calendar.CalendarConnectionRepository
-	cacheRepo      calendar.SpendingCacheRepository
 	calendarClient calendarClient
 	oauth          oauthProvider
 	stateSecret    string
@@ -55,15 +53,14 @@ type CalendarService struct {
 	now            func() time.Time
 }
 
-func NewCalendarService(repo calendar.CalendarConnectionRepository, cacheRepo calendar.SpendingCacheRepository, client calendarClient, oauth oauthProvider, stateSecret string) *CalendarService {
+func NewCalendarService(repo calendar.CalendarConnectionRepository, client calendarClient, oauth oauthProvider, stateSecret string) *CalendarService {
 	return &CalendarService{
 		repo:           repo,
-		cacheRepo:      cacheRepo,
 		calendarClient: client,
-		oauth:          oauth,
-		stateSecret:    stateSecret,
-		stateTTL:       15 * time.Minute,
-		now:            time.Now,
+		oauth:        oauth,
+		stateSecret:  stateSecret,
+		stateTTL:     15 * time.Minute,
+		now:          time.Now,
 	}
 }
 
@@ -135,26 +132,12 @@ func (s *CalendarService) SetCalendar(ctx context.Context, uid, calendarID strin
 }
 
 func (s *CalendarService) GetSpending(ctx context.Context, uid string, start, end time.Time) (calendar.Spendings, error) {
-	weekStart := toISOMonday(start)
-	if weekStart != start {
-		log.Printf("calendar.GetSpending: start date %s normalized to ISO Monday %s", start.Format("2006-01-02"), weekStart.Format("2006-01-02"))
-	}
-
 	conn, err := s.requireConnection(ctx, uid)
 	if err != nil {
 		return nil, err
 	}
 	if conn.AccessToken == "" || conn.CalendarID == "" {
 		return nil, errpkg.NewCalendarNotConnectedError("calendar not connected")
-	}
-
-	if s.cacheRepo != nil {
-		cached, cacheErr := s.cacheRepo.Get(ctx, uid, weekStart)
-		if cacheErr != nil {
-			log.Printf("calendar.GetSpending: cache read failed for uid=%s week=%s: %v", uid, weekStart.Format("2006-01-02"), cacheErr)
-		} else if cached != nil {
-			return cached, nil
-		}
 	}
 
 	token := &oauth2.Token{
@@ -179,7 +162,7 @@ func (s *CalendarService) GetSpending(ctx context.Context, uid string, start, en
 		token = refreshed
 	}
 
-	events, err := s.calendarClient.ListEvents(ctx, token.AccessToken, conn.CalendarID, weekStart, end)
+	events, err := s.calendarClient.ListEvents(ctx, token.AccessToken, conn.CalendarID, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -196,22 +179,7 @@ func (s *CalendarService) GetSpending(ctx context.Context, uid string, start, en
 		out[name] += event.End.Sub(event.Start).Hours()
 	}
 
-	if s.cacheRepo != nil {
-		if cacheErr := s.cacheRepo.Set(ctx, uid, weekStart, out); cacheErr != nil {
-			log.Printf("calendar.GetSpending: cache write failed for uid=%s week=%s: %v", uid, weekStart.Format("2006-01-02"), cacheErr)
-		}
-	}
-
 	return out, nil
-}
-
-func toISOMonday(date time.Time) time.Time {
-	weekday := date.Weekday()
-	offset := int(weekday) - int(time.Monday)
-	if offset < 0 {
-		offset += 7
-	}
-	return date.AddDate(0, 0, -offset)
 }
 
 func (s *CalendarService) requireConnection(ctx context.Context, uid string) (*calendar.CalendarConnection, error) {

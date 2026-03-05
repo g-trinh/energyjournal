@@ -201,7 +201,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Aggregates event durations from the user's selected Google Calendar grouped by event color label. Results are served from Firestore cache when available; a cache miss triggers a live fetch from Google Calendar API and stores the result keyed by ISO week start date.",
+                "description": "Aggregates event durations from the user's selected Google Calendar grouped by event color label.",
                 "tags": [
                     "calendar"
                 ],

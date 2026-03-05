@@ -41,11 +41,6 @@ type CalendarConnectionRepository interface {
 	Upsert(ctx context.Context, conn CalendarConnection) error
 }
 
-type SpendingCacheRepository interface {
-	Get(ctx context.Context, uid string, weekStart time.Time) (Spendings, error)
-	Set(ctx context.Context, uid string, weekStart time.Time, spendings Spendings) error
-}
-
 // SpendingService defines the contract for spending retrieval.
 // Kept for backward compatibility while handlers migrate to CalendarService.
 type SpendingService interface {

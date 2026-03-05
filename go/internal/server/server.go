@@ -74,7 +74,6 @@ func New(addr string) *http.Server {
 	energyLevelsService := energyservice.NewEnergyService(energyRepo)
 	authMiddleware := middleware.NewAuthMiddleware(firebaseClient, userRepo)
 	connectionRepo := calendarstorage.NewConnectionRepository(firestoreClient.Client)
-	spendingCacheRepo := calendarstorage.NewSpendingCacheRepository(firestoreClient.Client)
 	googleClient := integgoogle.NewGoogleCalendarClient()
 	calendarOAuthConfig := &oauth2.Config{
 		ClientID:     googleClientID,
@@ -86,7 +85,7 @@ func New(addr string) *http.Server {
 	stateSecret := googleStateSecret
 
 	deps := Dependencies{
-		CalendarService: calendarservice.NewCalendarService(connectionRepo, spendingCacheRepo, googleClient, calendarOAuthConfig, stateSecret),
+		CalendarService: calendarservice.NewCalendarService(connectionRepo, googleClient, calendarOAuthConfig, stateSecret),
 		UserService:     userService,
 		EnergyService:   energyLevelsService,
 		AuthMiddleware:  authMiddleware,

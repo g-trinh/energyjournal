@@ -43,32 +43,5 @@ describe('App calendar status gate', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Connect your Google Calendar' })).toBeInTheDocument()
     })
-    expect(screen.queryByRole('heading', { name: 'Time Distribution' })).not.toBeInTheDocument()
-  })
-
-  it('renders chart successfully on mobile viewport', async () => {
-    vi.mocked(getCalendarStatus).mockResolvedValue('connected')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        BlueberryCalendarLongName: 8,
-      }),
-    } as Response))
-
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 480 })
-    window.dispatchEvent(new Event('resize'))
-
-    render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Time Distribution' })).toBeInTheDocument()
-    })
-    expect(screen.getByRole('button', { name: /previous week/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /next week/i })).toBeInTheDocument()
   })
 })

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useNavigate } from 'react-router-dom'
 import CalendarConnectPrompt from '@/components/calendar/CalendarConnectPrompt'
@@ -6,8 +6,8 @@ import CalendarPicker from '@/components/calendar/CalendarPicker'
 import Toast from '@/components/calendar/Toast'
 import type { CalendarItem } from '@/components/calendar/types'
 import { trackEvent } from '@/lib/analytics'
+import { CALENDAR_COLOR_MAP, CALENDAR_FALLBACK_COLORS } from '@/lib/calendarColors'
 import { clearSession, getIdToken } from '@/lib/session'
-import { getSpendingColor, toChartData, truncateAxisLabel, type ChartData, type Spendings } from '@/lib/timeSpending'
 import {
   getCalendarAuthURL,
   getCalendars,
@@ -18,37 +18,23 @@ import {
 import './App.css'
 import './styles/calendar.css'
 
+type Spendings = Record<string, number>
+
+interface ChartData {
+  name: string
+  hours: number
+}
+
 type FetchErrorKind = 'offline' | 'generic'
 type ViewStatus = 'loading' | CalendarStatus
 
-function startOfISOMonday(date: Date): Date {
-  const normalized = new Date(date)
-  normalized.setHours(0, 0, 0, 0)
-  const day = normalized.getDay()
-  const offset = day === 0 ? 6 : day - 1
-  normalized.setDate(normalized.getDate() - offset)
-  return normalized
+function getColorForCategory(name: string, index: number): string {
+  return CALENDAR_COLOR_MAP[name] || CALENDAR_FALLBACK_COLORS[index % CALENDAR_FALLBACK_COLORS.length]
 }
 
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date)
-  next.setDate(next.getDate() + days)
-  return next
-}
-
-function formatWeekLabel(weekStart: Date): string {
-  const weekEnd = addDays(weekStart, 6)
-  const startLabel = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const endLabel = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const yearLabel = weekEnd.getFullYear()
-  return `${startLabel} – ${endLabel}, ${yearLabel}`
-}
-
-function formatApiDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+function formatDateForDisplay(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
 // Custom tooltip component
@@ -75,22 +61,41 @@ function App() {
   const [calendars, setCalendars] = useState<CalendarItem[]>([])
   const [calendarsLoading, setCalendarsLoading] = useState(false)
   const [showToast, setShowToast] = useState(false)
-  const [weekStart, setWeekStart] = useState(() => startOfISOMonday(new Date()))
-  const [showSpinner, setShowSpinner] = useState(false)
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const lastSunday = new Date(today)
+    lastSunday.setDate(today.getDate() - (dayOfWeek === 0 ? 7 : dayOfWeek))
+    const lastMonday = new Date(lastSunday)
+    lastMonday.setDate(lastSunday.getDate() - 6)
+    return lastMonday.toISOString().split('T')[0]
+  })
+  const [endDate, setEndDate] = useState(() => {
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const lastSunday = new Date(today)
+    lastSunday.setDate(today.getDate() - (dayOfWeek === 0 ? 7 : dayOfWeek))
+    return lastSunday.toISOString().split('T')[0]
+  })
   const [totalHours, setTotalHours] = useState(0)
   const chartRef = useRef<HTMLDivElement>(null)
   const mainContentRef = useRef<HTMLDivElement>(null)
-  const currentWeekStart = useMemo(() => startOfISOMonday(new Date()), [])
-  const isCurrentWeek = weekStart.getTime() >= currentWeekStart.getTime()
-  const weekLabel = formatWeekLabel(weekStart)
 
   const fetchSpendings = useCallback(async () => {
     setLoading(true)
     setError(null)
     setErrorKind('generic')
     try {
-      const startDate = formatApiDate(weekStart)
-      const endDate = formatApiDate(addDays(weekStart, 6))
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+        setError('Please use valid start and end dates.')
+        return
+      }
+
+      if (startDate > endDate) {
+        setError('Start date cannot be after end date.')
+        return
+      }
 
       const token = getIdToken()
       if (!token) {
@@ -120,7 +125,10 @@ function App() {
         throw new Error(`HTTP ${response.status}`)
       }
       const spendings: Spendings = await response.json()
-      const chartData = toChartData(spendings)
+      const chartData = Object.entries(spendings)
+        .filter(([name, hours]) => typeof name === 'string' && typeof hours === 'number' && Number.isFinite(hours))
+        .map(([name, hours]) => ({ name, hours }))
+        .sort((a, b) => b.hours - a.hours)
       setData(chartData)
       setTotalHours(chartData.reduce((acc, item) => acc + item.hours, 0))
     } catch (err) {
@@ -136,7 +144,7 @@ function App() {
     } finally {
       setLoading(false)
     }
-  }, [navigate, weekStart])
+  }, [endDate, navigate, startDate])
 
   const loadCalendarPicker = useCallback(async () => {
     setCalendarsLoading(true)
@@ -187,21 +195,6 @@ function App() {
     }
   }, [calendarStatus, fetchSpendings])
 
-  useEffect(() => {
-    if (!loading) {
-      setShowSpinner(false)
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      setShowSpinner(true)
-    }, 200)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [loading])
-
   async function handleConnectCalendar() {
     try {
       const authURL = await getCalendarAuthURL()
@@ -230,17 +223,6 @@ function App() {
     fetchSpendings()
   }
 
-  const handlePreviousWeek = () => {
-    setWeekStart((prev) => addDays(prev, -7))
-  }
-
-  const handleNextWeek = () => {
-    if (isCurrentWeek) {
-      return
-    }
-    setWeekStart((prev) => addDays(prev, 7))
-  }
-
   return (
     <div className="app">
       <div className="ambient-glow ambient-glow-1" />
@@ -266,35 +248,103 @@ function App() {
         )}
 
         {calendarStatus === 'pending_selection' && (
-          <CalendarPicker calendars={calendars} isLoading={calendarsLoading} onSave={handleSaveCalendar} />
+          <>
+            <section className="date-range-card">
+              <div className="date-range-inner">
+                <div className="date-field">
+                  <label htmlFor="start-date">From</label>
+                  <div className="date-input-wrapper">
+                    <input id="start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                    <span className="date-display">{formatDateForDisplay(startDate)}</span>
+                  </div>
+                </div>
+
+                <div className="date-separator">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+
+                <div className="date-field">
+                  <label htmlFor="end-date">To</label>
+                  <div className="date-input-wrapper">
+                    <input id="end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                    <span className="date-display">{formatDateForDisplay(endDate)}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <CalendarPicker calendars={calendars} isLoading={calendarsLoading} onSave={handleSaveCalendar} />
+          </>
         )}
 
         {calendarStatus === 'connected' && (
           <>
-            <section className="week-nav-card">
-              <button
-                type="button"
-                className="week-nav-btn"
-                onClick={handlePreviousWeek}
-                aria-label="Previous week"
-              >
-                ← Prev week
-              </button>
-              <p className={`week-label ${isCurrentWeek ? 'current' : ''}`}>{weekLabel}</p>
-              <button
-                type="button"
-                className="week-nav-btn"
-                onClick={handleNextWeek}
-                aria-label="Next week"
-                disabled={isCurrentWeek}
-              >
-                Next week →
-              </button>
+            <section className="date-range-card">
+              <div className="date-range-inner">
+                <div className="date-field">
+                  <label htmlFor="start-date">From</label>
+                  <div className="date-input-wrapper">
+                    <input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                    <span className="date-display">{formatDateForDisplay(startDate)}</span>
+                  </div>
+                </div>
+
+                <div className="date-separator">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+
+                <div className="date-field">
+                  <label htmlFor="end-date">To</label>
+                  <div className="date-input-wrapper">
+                    <input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                    <span className="date-display">{formatDateForDisplay(endDate)}</span>
+                  </div>
+                </div>
+
+                <button className="refresh-btn" onClick={handleRefresh} disabled={loading}>
+                  <svg viewBox="0 0 24 24" width="18" height="18" className={loading ? 'spinning' : ''}>
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M21 3v5h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>Refresh</span>
+                </button>
+              </div>
             </section>
 
+            {!loading && !error && data.length > 0 && (
+              <section className="stats-summary">
+                <div className="stat-card stat-total">
+                  <span className="stat-value">{totalHours.toFixed(1)}</span>
+                  <span className="stat-label">hours tracked</span>
+                </div>
+                <div className="stat-card stat-categories">
+                  <span className="stat-value">{data.length}</span>
+                  <span className="stat-label">categories</span>
+                </div>
+                <div className="stat-card stat-top">
+                  <span className="stat-value">{data[0]?.name || '—'}</span>
+                  <span className="stat-label">top activity</span>
+                </div>
+              </section>
+            )}
+
             <section className="chart-section" ref={chartRef}>
-              {showSpinner && (
-                <div className="loading-state" aria-hidden="true">
+              {loading && (
+                <div className="loading-state">
                   <div className="loading-spinner">
                     <div className="spinner-ring" />
                     <div className="spinner-ring" />
@@ -324,7 +374,7 @@ function App() {
                 <div className="chart-container">
                   <div className="chart-header">
                     <h2>Time Distribution</h2>
-                    <p className="chart-subtitle">{`${weekLabel} · ${totalHours.toFixed(1)}h total`}</p>
+                    <p className="chart-subtitle">Hours per category</p>
                   </div>
 
                   <div className="chart-wrapper">
@@ -337,8 +387,8 @@ function App() {
                         <defs>
                           {data.map((entry, index) => (
                             <linearGradient key={`gradient-${index}`} id={`barGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={getSpendingColor(entry.name, index)} stopOpacity={1} />
-                              <stop offset="100%" stopColor={getSpendingColor(entry.name, index)} stopOpacity={0.6} />
+                              <stop offset="0%" stopColor={getColorForCategory(entry.name, index)} stopOpacity={1} />
+                              <stop offset="100%" stopColor={getColorForCategory(entry.name, index)} stopOpacity={0.6} />
                             </linearGradient>
                           ))}
                           <filter id="glow">
@@ -354,7 +404,6 @@ function App() {
                           axisLine={false}
                           tickLine={false}
                           tick={{ fill: '#a09a90', fontSize: 13, fontWeight: 500 }}
-                          tickFormatter={(value) => truncateAxisLabel(String(value))}
                           dy={10}
                           angle={-35}
                           textAnchor="end"
@@ -392,7 +441,7 @@ function App() {
                       <div key={entry.name} className="legend-item">
                         <span
                           className="legend-dot"
-                          style={{ backgroundColor: getSpendingColor(entry.name, index) }}
+                          style={{ backgroundColor: getColorForCategory(entry.name, index) }}
                         />
                         <span className="legend-name">{entry.name}</span>
                         <span className="legend-hours">{entry.hours.toFixed(1)}h</span>
@@ -411,7 +460,7 @@ function App() {
                     </svg>
                   </div>
                   <p className="empty-title">No data yet</p>
-                  <p className="empty-subtitle">No calendar events were found for this week.</p>
+                  <p className="empty-subtitle">Select a date range and refresh to see your energy flow</p>
                 </div>
               )}
             </section>
