@@ -41,6 +41,25 @@ func (c *fakeCalendarClient) ListEvents(context.Context, string, string, time.Ti
 	return c.events, nil
 }
 
+type fakeSpendingCacheRepo struct {
+	getFn func(ctx context.Context, uid string, weekStart time.Time) (calendar.Spendings, error)
+	setFn func(ctx context.Context, uid string, weekStart time.Time, spendings calendar.Spendings) error
+}
+
+func (r *fakeSpendingCacheRepo) Get(ctx context.Context, uid string, weekStart time.Time) (calendar.Spendings, error) {
+	if r.getFn == nil {
+		return nil, nil
+	}
+	return r.getFn(ctx, uid, weekStart)
+}
+
+func (r *fakeSpendingCacheRepo) Set(ctx context.Context, uid string, weekStart time.Time, spendings calendar.Spendings) error {
+	if r.setFn == nil {
+		return nil
+	}
+	return r.setFn(ctx, uid, weekStart, spendings)
+}
+
 type fakeTokenSource struct {
 	token *oauth2.Token
 	err   error
@@ -51,10 +70,10 @@ func (s fakeTokenSource) Token() (*oauth2.Token, error) {
 }
 
 type fakeOAuth struct {
-	authURL      string
-	exchangeTok  *oauth2.Token
-	exchangeErr  error
-	tokenSource  oauth2.TokenSource
+	authURL     string
+	exchangeTok *oauth2.Token
+	exchangeErr error
+	tokenSource oauth2.TokenSource
 }
 
 func (o *fakeOAuth) AuthCodeURL(state string, _ ...oauth2.AuthCodeOption) string {
@@ -79,7 +98,7 @@ func TestGetStatus(t *testing.T) {
 		getFn: func(context.Context, string) (*calendar.CalendarConnection, error) {
 			return nil, nil
 		},
-	}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
+	}, &fakeSpendingCacheRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 
 	status, err := svc.GetStatus(context.Background(), "uid")
 	if err != nil {
@@ -93,7 +112,7 @@ func TestGetStatus(t *testing.T) {
 func TestHandleCallbackInvalidState(t *testing.T) {
 	t.Parallel()
 
-	svc := NewCalendarService(&fakeRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
+	svc := NewCalendarService(&fakeRepo{}, &fakeSpendingCacheRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 	err := svc.HandleCallback(context.Background(), "code", "invalid")
 	if err == nil {
 		t.Fatal("expected error")
@@ -121,7 +140,7 @@ func TestHandleCallbackUpsertsTokens(t *testing.T) {
 			saved = conn
 			return nil
 		},
-	}, &fakeCalendarClient{}, oauth, "secret")
+	}, &fakeSpendingCacheRepo{}, &fakeCalendarClient{}, oauth, "secret")
 	svc.now = func() time.Time { return time.Date(2026, 3, 3, 11, 0, 0, 0, time.UTC) }
 
 	state := svc.signState("uid-1", svc.now())
@@ -141,7 +160,7 @@ func TestGetCalendarsRequiresOAuthConnection(t *testing.T) {
 		getFn: func(context.Context, string) (*calendar.CalendarConnection, error) {
 			return nil, nil
 		},
-	}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
+	}, &fakeSpendingCacheRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 
 	_, err := svc.GetCalendars(context.Background(), "uid")
 	if err == nil {
@@ -169,7 +188,7 @@ func TestSetCalendarPersistsSelection(t *testing.T) {
 			saved = conn
 			return nil
 		},
-	}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
+	}, &fakeSpendingCacheRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 
 	if err := svc.SetCalendar(context.Background(), "uid", "primary"); err != nil {
 		t.Fatalf("unexpected err: %v", err)
@@ -201,7 +220,7 @@ func TestGetSpendingAggregatesByColorAndRefreshesToken(t *testing.T) {
 			}
 			return nil
 		},
-	}, &fakeCalendarClient{
+	}, &fakeSpendingCacheRepo{}, &fakeCalendarClient{
 		events: []calendar.Event{
 			{ColorID: "5", Start: now.Add(-4 * time.Hour), End: now.Add(-3 * time.Hour)},
 			{ColorID: "5", Start: now.Add(-3 * time.Hour), End: now.Add(-90 * time.Minute)},
@@ -237,7 +256,7 @@ func TestGetSpendingAggregatesByColorAndRefreshesToken(t *testing.T) {
 func TestVerifyStateExpired(t *testing.T) {
 	t.Parallel()
 
-	svc := NewCalendarService(&fakeRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
+	svc := NewCalendarService(&fakeRepo{}, &fakeSpendingCacheRepo{}, &fakeCalendarClient{}, &fakeOAuth{}, "secret")
 	svc.now = func() time.Time { return time.Date(2026, 3, 3, 12, 0, 0, 0, time.UTC) }
 	expired := svc.signState("uid", svc.now().Add(-20*time.Minute))
 
