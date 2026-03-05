@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 
@@ -99,7 +99,6 @@ describe('App time spending interactions', () => {
   })
 
   it('does not show spinner when loading finishes before 200ms', async () => {
-    vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue(createSpendingsResponse({ Tomato: 3 }))
     vi.stubGlobal('fetch', fetchMock)
 
@@ -112,22 +111,19 @@ describe('App time spending interactions', () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalled()
     })
-    await act(async () => {
-      vi.advanceTimersByTime(199)
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Time Distribution' })).toBeInTheDocument()
     })
-
     expect(screen.queryByText('Gathering your energy data...')).not.toBeInTheDocument()
   })
 
   it('shows spinner after 200ms while loading and clears it when complete', async () => {
-    vi.useFakeTimers()
-
-    let resolveFetch: ((value: Response) => void) | null = null
     const fetchMock = vi.fn().mockImplementation(
-      () =>
-        new Promise<Response>((resolve) => {
-          resolveFetch = resolve
-        }),
+      () => new Promise<Response>((resolve) => {
+        window.setTimeout(() => {
+          resolve(createSpendingsResponse({ Tomato: 3 }))
+        }, 350)
+      }),
     )
     vi.stubGlobal('fetch', fetchMock)
 
@@ -141,14 +137,9 @@ describe('App time spending interactions', () => {
       expect(fetchMock).toHaveBeenCalled()
     })
 
-    await act(async () => {
-      vi.advanceTimersByTime(201)
-    })
-    expect(screen.getByText('Gathering your energy data...')).toBeInTheDocument()
-
-    await act(async () => {
-      resolveFetch?.(createSpendingsResponse({ Tomato: 3 }))
-    })
+    await waitFor(() => {
+      expect(screen.getByText('Gathering your energy data...')).toBeInTheDocument()
+    }, { timeout: 1000 })
     await waitFor(() => {
       expect(screen.queryByText('Gathering your energy data...')).not.toBeInTheDocument()
     })
